@@ -1,0 +1,4 @@
+Modelo,Accuracy
+Regresión Logística,0.6942940114590691
+Random Forest,0.7226277372262774
+XGBoost,0.7239620124009104

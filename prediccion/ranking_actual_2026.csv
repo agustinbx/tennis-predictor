@@ -1,0 +1,501 @@
+player_slug,rank,age,points
+Carlos Alcaraz,1,0,13150
+Jannik Sinner,2,0,10300
+Novak Djokovic,3,0,5280
+Alexander Zverev,4,0,4605
+Lorenzo Musetti,5,0,4405
+Felix Auger Aliassime,6,0,3950
+Taylor Fritz,7,0,3940
+Alex de Minaur,8,0,3835
+Ben Shelton,9,0,3560
+Alexander Bublik,10,0,3235
+Daniil Medvedev,11,0,3060
+Jack Draper,12,0,2790
+Casper Ruud,13,0,2625
+Alejandro Davidovich Fokina,14,0,2535
+Andrey Rublev,15,0,2510
+Jakub Mensik,16,0,2425
+Holger Rune,17,0,2340
+Karen Khachanov,18,0,2320
+Francisco Cerundolo,19,0,2135
+Flavio Cobolli,20,0,1955
+Jiri Lehecka,21,0,1860
+Luciano Darderi,22,0,1789
+Learner Tien,23,0,1710
+Tommy Paul,24,0,1700
+Valentin Vacherot,25,0,1611
+Cameron Norrie,26,0,1603
+Tallon Griekspoor,27,0,1585
+Arthur Rinderknech,28,0,1542
+Brandon Nakashima,29,0,1535
+Frances Tiafoe,30,0,1510
+Tomas Machac,31,0,1510
+Stefanos Tsitsipas,32,0,1445
+Joao Fonseca,33,0,1440
+Sebastian Baez,34,0,1420
+Corentin Moutet,35,0,1383
+Ugo Humbert,36,0,1335
+Jaume Munar,37,0,1185
+Gabriel Diallo,38,0,1175
+Zizou Bergs,39,0,1170
+Denis Shapovalov,40,0,1160
+Alex Michelsen,41,0,1160
+Arthur Fils,42,0,1110
+Grigor Dimitrov,43,0,1105
+Nuno Borges,44,0,1070
+Jenson Brooksby,45,0,1042
+Fabian Marozsan,46,0,1040
+Camilo Ugo Carabelli,47,0,1028
+Alexandre Muller,48,0,1020
+Marton Fucsovics,49,0,1009
+Alexei Popyrin,50,0,1000
+Daniel Altmaier,51,0,995
+Adrian Mannarino,52,0,975
+Sebastian Korda,53,0,960
+Tomas Martin Etcheverry,54,0,945
+Kamil Majchrzak,55,0,920
+Giovanni Mpetshi Perricard,56,0,905
+Valentin Royer,57,0,897
+Matteo Berrettini,58,0,895
+Marcos Giron,59,0,895
+Lorenzo Sonego,60,0,890
+Marin Cilic,61,0,890
+Damir Dzumhur,62,0,877
+Francisco Comesana,63,0,869
+Terence Atmane,64,0,849
+Botic Van De Zandschulp,65,0,849
+Miomir Kecmanovic,66,0,820
+Reilly Opelka,67,0,798
+Eliot Spizzirri,68,0,781
+Raphael Collignon,69,0,777
+Hubert Hurkacz,70,0,775
+Alejandro Tabilo,71,0,774
+Matteo Arnaldi,72,0,765
+Mariano Navone,73,0,760
+Ethan Quinn,74,0,758
+Arthur Cazaux,75,0,755
+Filip Misolic,76,0,728
+Quentin Halys,77,0,725
+Aleksandar Kovacevic,78,0,721
+Hamad Medjedovic,79,0,717
+Juan Manuel Cerundolo,80,0,717
+Emilio Nava,81,0,710
+Jan Lennard Struff,82,0,706
+James Duckworth,83,0,691
+Alexander Shevchenko,84,0,690
+Roberto Bautista Agut,85,0,685
+Jesper De Jong,86,0,673
+Jacob Fearnley,87,0,668
+Aleksandar Vukic,88,0,656
+Cristian Garin,89,0,656
+Yannick Hanfmann,90,0,653
+Laslo Djere,91,0,651
+Thiago Agustin Tirante,92,0,647
+Adam Walton,93,0,643
+Pedro Martinez,94,0,636
+Vit Kopriva,95,0,632
+Ignacio Buse,96,0,623
+Luca Nardi,97,0,621
+Dalibor Svrcina,98,0,618
+Hugo Gaston,99,0,616
+Carlos Taberner,100,0,608
+Adolfo Daniel Vallejo,101,0,580
+Tristan Schoolkate,102,0,570
+Alexander Blockx,103,0,570
+Roman Andres Burruchaga,104,0,568
+Pablo Carreno Busta,105,0,566
+Stan Wawrinka,106,0,562
+Mattia Bellucci,107,0,553
+Francesco Maestrelli,108,0,553
+Patrick Kypson,109,0,552
+Zachary Svajda,110,0,551
+Jordan Thompson,111,0,548
+Mackenzie Mcdonald,112,0,547
+Rinky Hijikata,113,0,546
+Tomas Barrios Vera,114,0,546
+Shintaro Mochizuki,115,0,537
+Chun Hsin Tseng,116,0,536
+David Goffin,117,0,515
+Otto Virtanen,118,0,513
+Christopher O'Connell,119,0,511
+Titouan Droguet,120,0,510
+Elmer Moller,121,0,509
+Dino Prizmic,122,0,507
+Dusan Lajovic,123,0,503
+Rafael Jodar,124,0,498
+Jan Choinski,125,0,498
+Luca Van Assche,126,0,493
+Vilius Gaubas,127,0,490
+Kyrian Jacquet,128,0,489
+Borna Coric,129,0,488
+Martin Damm,130,0,486
+Benjamin Bonzi,131,0,484
+Nicolai Budkov Kjaer,132,0,476
+Billy Harris,133,0,474
+Marco Trungelliti,134,0,472
+Sebastian Ofner,135,0,471
+Coleman Wong,136,0,466
+Nikoloz Basilashvili,137,0,464
+Dane Sweeny,138,0,464
+Chris Rodesch,139,0,456
+Brandon Holt,140,0,453
+Yunchaokete Bu,141,0,449
+Colton Smith,142,0,446
+Nicolas Jarry,143,0,441
+Sho Shimabukuro,144,0,441
+Andrea Pellegrino,145,0,434
+Moez Echargui,146,0,434
+Yibing Wu,147,0,427
+Jaime Faria,148,0,425
+Liam Draxl,149,0,422
+Lukas Klein,150,0,420
+Michael Zheng,151,0,414
+Daniel Merida,152,0,411
+Arthur Fery,153,0,396
+Giulio Zeppieri,154,0,393
+Martin Landaluce,155,0,388
+Arthur Gea,156,0,387
+Yoshihito Nishioka,157,0,386
+Mark Lajal,158,0,378
+Francesco Passaro,159,0,376
+Ugo Blanchet,160,0,375
+Matteo Gigante,161,0,367
+Gael Monfils,162,0,360
+Stefano Travaglia,163,0,360
+Luka Mikrut,164,0,359
+Henrique Rocha,165,0,357
+Yosuke Watanuki,166,0,356
+Hugo Dellien,167,0,355
+Harold Mayot,168,0,355
+Guy Den Ouden,169,0,355
+Daniil Glinka,170,0,355
+Pierre Hugues Herbert,171,0,351
+Jurij Rodionov,172,0,350
+Leandro Riedi,173,0,348
+Rei Sakamoto,174,0,344
+Roberto Carballes Baena,175,0,343
+Zsombor Piros,176,0,341
+Nicolas Mejia,177,0,341
+Alex Bolt,178,0,339
+Vitaliy Sachko,179,0,336
+Alex Barrena,180,0,336
+Jack Pinnington Jones,181,0,331
+Juan Pablo Ficovich,182,0,331
+Jay Clarke,183,0,329
+Roman Safiullin,184,0,328
+Elias Ymer,185,0,327
+Lloyd Harris,186,0,324
+Daniel Elahi Galan,187,0,323
+Hugo Grenier,188,0,323
+Zdenek Kolar,189,0,316
+Daniel Evans,190,0,314
+Timofey Skatov,191,0,314
+Bernard Tomic,192,0,313
+Nishesh Basavareddy,193,0,310
+Justin Engel,194,0,309
+Jerome Kym,195,0,307
+Federico Agustin Gomez,196,0,306
+Thiago Seyboth Wild,197,0,305
+Clement Chidekh,198,0,304
+August Holmgren,199,0,303
+Alex Molcan,200,0,302
+Dan Added,201,0,299
+Alvaro Guillen Meza,202,0,298
+Jason Kubler,203,0,295
+George Loffhagen,204,0,295
+Pablo Llamas Ruiz,205,0,292
+Lorenzo Giustino,206,0,292
+Joao Lucas Reis Da Silva,207,0,291
+James Mccabe,208,0,289
+Thiago Monteiro,209,0,283
+Gilles Arnaud Bailly,210,0,280
+Juan Carlos Prado Angelo,211,0,279
+Remy Bertola,212,0,274
+Clement Tabur,213,0,273
+Ilia Simakin,214,0,273
+Oliver Crawford,215,0,273
+Tristan Boyer,216,0,268
+Marco Cecchinato,217,0,266
+Gonzalo Bueno,218,0,265
+Luka Pavlovic,219,0,262
+Yi Zhou,220,0,261
+Yu Hsiou Hsu,221,0,259
+Rodrigo Pacheco Mendez,222,0,256
+Lukas Neumayer,223,0,255
+Nerman Fatic,224,0,254
+Federico Cina,225,0,252
+Dmitry Popko,226,0,248
+Genaro Alberto Olivieri,227,0,247
+Santiago Rodriguez Taverna,228,0,246
+Lautaro Midon,229,0,245
+Marc Andrea Huesler,230,0,244
+Ryan Peniston,231,0,244
+Matej Dodig,232,0,244
+Andrea Collarini,233,0,244
+Felipe Meligeni Alves,234,0,243
+Max Houkes,235,0,242
+Alexis Galarneau,236,0,237
+Borna Gojo,237,0,236
+Marko Topo,238,0,234
+Johannus Monday,239,0,233
+Kaichi Uchida,240,0,231
+Daniel Michalski,241,0,229
+Murphy Cassone,242,0,227
+Joel Schwaerzler,243,0,226
+Toby Samuel,244,0,224
+Mitchell Krueger,245,0,221
+Rio Noguchi,246,0,221
+Kimmer Coppejans,247,0,220
+Ivan Gakhov,248,0,219
+Filip Cristian Jianu,249,0,218
+Edas Butvilas,250,0,217
+Tom Gentzsch,251,0,217
+Daniel Rincon,252,0,213
+Pedro Boscardin Dias,253,0,213
+Andres Andrade,254,0,211
+Frederico Ferreira Silva,255,0,210
+Mikhail Kukushkin,256,0,208
+Gustavo Heide,257,0,207
+Charles Broom,258,0,206
+Juncheng Shang,259,0,205
+Franco Agamenone,260,0,204
+Patrick Zahraj,261,0,204
+Pol Martin Tiffon,262,0,203
+Sascha Gueymard Wayenburg,263,0,203
+Dimitar Kuzmanov,264,0,203
+Fajing Sun,265,0,202
+Geoffrey Blancaneaux,266,0,200
+Nicolas Kicker,267,0,200
+Tiago Pereira,268,0,200
+Saba Purtseladze,269,0,199
+Andres Martin,270,0,198
+Florent Bax,271,0,197
+Benjamin Hassan,272,0,196
+Stefan Kozlov,273,0,196
+Nikolas Sanchez Izquierdo,274,0,194
+Stefanos Sakellaridis,275,0,193
+Alejandro Moro Canas,276,0,191
+Murkel Dellien,277,0,186
+Juan Pablo Varillas,278,0,184
+Andrej Nedic,279,0,184
+Darwin Blanch,280,0,184
+Liam Broady,281,0,184
+Henri Squire,282,0,183
+Michael Geerts,283,0,183
+Kei Nishikori,284,0,182
+Facundo Diaz Acosta,285,0,182
+Petr Brunclik,286,0,181
+Hynek Barton,287,0,180
+Fabrizio Andaloro,288,0,180
+Matheus Pucinelli De Almeida,289,0,180
+Robin Bertrand,290,0,180
+Lilian Marmousez,291,0,179
+Beibit Zhukayev,292,0,178
+Sumit Nagal,293,0,178
+Alex Rybakov,294,0,177
+Calvin Hemery,295,0,177
+Mats Rosenkranz,296,0,177
+Yasutaka Uchiyama,297,0,176
+Norbert Gombos,298,0,175
+Marat Sharipov,299,0,174
+Michael Mmoh,300,0,172
+Maximus Jones,301,0,172
+Sandro Kopp,302,0,171
+Garrett Johns,303,0,171
+Harry Wendelken,304,0,169
+Petr Bar Biryukov,305,0,169
+Jacopo Berrettini,306,0,168
+Gianluca Cadenasso,307,0,166
+Keegan Smith,308,0,165
+Akira Santillan,309,0,165
+Abdullah Shelbayh,310,0,164
+Viktor Durasovic,311,0,164
+Diego Dedura,312,0,164
+Eliakim Coulibaly,313,0,163
+Gabi Adrian Boitan,314,0,161
+Miguel Damas,315,0,161
+Philip Henning,316,0,160
+Gauthier Onclin,317,0,160
+Mathys Erhard,318,0,159
+Cedrik Marcel Stebe,319,0,158
+Renta Tokuda,320,0,157
+Matias Soto,321,0,157
+Federico Coria,322,0,156
+Maxim Mrva,323,0,156
+Daniel Dutra Da Silva,324,0,155
+James Trotter,325,0,153
+Felix Gill,326,0,152
+Duje Ajdukovic,327,0,151
+Sergey Fomin,328,0,151
+Oliver Tarvet,329,0,150
+Tyler Zink,330,0,150
+Andrej Martin,331,0,149
+Matteo Martineau,332,0,149
+Tom Paris,333,0,148
+Facundo Mena,334,0,145
+Martin Krumich,335,0,145
+Hady Habib,336,0,143
+Jelle Sels,337,0,143
+Giles Hussey,338,0,143
+Soonwoo Kwon,339,0,142
+Pavel Kotov,340,0,142
+Franco Roncadelli,341,0,142
+Hamish Stewart,342,0,142
+Raul Brancaccio,343,0,142
+Sean Cuenin,344,0,141
+Carlos Sanchez Jover,345,0,141
+Juan Bautista Torres,346,0,141
+Antoine Ghibaudo,347,0,140
+Florian Broska,348,0,139
+Guido Ivan Justo,349,0,139
+Igor Marcondes,350,0,138
+Javier Barranco Cosano,351,0,138
+Sanhui Shin,352,0,138
+Gabriele Piraino,353,0,137
+Gonzalo Villanueva,354,0,137
+Oleg Prihodko,355,0,136
+Paul Jubb,356,0,134
+Alfredo Perez,357,0,134
+Richard Gasquet,358,0,133
+Christoph Negritu,359,0,133
+Juan Manuel La Serna,360,0,132
+Andre Ilagan,361,0,132
+Denis Yevseyev,362,0,132
+Trevor Svajda,363,0,131
+Jonas Forejtek,364,0,131
+Zhizhen Zhang,365,0,130
+Max Alcala Gurri,366,0,130
+Max Basing,367,0,128
+Viacheslav Bielinskyi,368,0,128
+Christian Langmo,369,0,128
+Yuta Shimizu,370,0,127
+Tung Lin Wu,371,0,127
+Dominic Stricker,372,0,126
+Aziz Dougaz,373,0,126
+Cezar Cretu,374,0,126
+Mert Alkaya,375,0,126
+Inaki Montes De La Torre,376,0,125
+Taro Daniel,377,0,124
+Pedro Sakamoto,378,0,124
+David Jorda Sanchis,379,0,124
+Andrea Vavassori,380,0,123
+Raphael Perot,381,0,123
+Nicolas Alvarez Varona,382,0,123
+Marc Polmans,383,0,123
+Aidan Mchugh,384,0,123
+Dan  Martin,385,0,122
+Luciano Emanuel Ambrogi,386,0,122
+Gastao Elias,387,0,121
+Ioannis Xilas,388,0,121
+Facundo Bagnis,389,0,120
+Christopher Eubanks,390,0,120
+Adria Soriano Barrera,391,0,120
+Carlo Alberto Caniato,392,0,120
+Hyeon Chung,393,0,120
+Mili Poljicak,394,0,120
+Federico Arnaboldi,395,0,120
+Kasidit Samrej,396,0,120
+Hernan Casanova,397,0,119
+Omar Jasika,398,0,119
+Corentin Denolly,399,0,119
+Albert Ramos Vinolas,400,0,118
+Aryan Shah,401,0,118
+Arthur Bouquier,402,0,117
+Andrea Picchione,403,0,117
+Daniel Milavsky,404,0,117
+Hayato Matsuoka,405,0,117
+Marek Gengel,406,0,117
+Samir Banerjee,407,0,116
+Alastair Gray,408,0,116
+Alexey Vatutin,409,0,116
+Olle Wallin,410,0,116
+Michele Ribecai,411,0,116
+Kilian Feldbausch,412,0,115
+Alex Hernandez,413,0,115
+Lucas Poullain,414,0,115
+Li Tu,415,0,114
+Oriol Roca Batalla,416,0,114
+Mariano Kestelboim,417,0,114
+Alex Martinez,418,0,114
+Maks Kasnikowski,419,0,113
+Patrick Maloney,420,0,113
+Jie Cui,421,0,113
+Buvaysar Gadamauri,422,0,113
+Radu Albot,423,0,112
+Neil Oberleitner,424,0,112
+Stuart Parker,425,0,111
+Cyril Vandermeersch,426,0,111
+Luca Potenza,427,0,111
+Lorenzo Carboni,428,0,110
+Vadym Ursu,429,0,110
+Arthur Weber,430,0,109
+Robert Strombachs,431,0,109
+Svyatoslav Gulin,432,0,109
+Daniel Masur,433,0,108
+Karan Singh,434,0,108
+Roberto Cid Subervi,435,0,107
+Stefano Napolitano,436,0,107
+Yanki Erel,437,0,107
+Luca Castelnuovo,438,0,107
+Antoine Escoffier,439,0,107
+Erik Arutiunian,440,0,107
+Rudolf Molleker,441,0,107
+Hikaru Shiraishi,442,0,107
+Lukas Pokorny,443,0,106
+Juan Estevez,444,0,106
+Federico Bondioli,445,0,106
+Marvin Moeller,446,0,105
+Dali Blanch,447,0,104
+Stefan Palosi,448,0,104
+Etienne Donnet,449,0,102
+Eduardo Ribeiro,450,0,102
+Milos Karol,451,0,102
+Max Wiskandt,452,0,102
+Alibek Kachmazov,453,0,101
+Lui Maxted,454,0,101
+Andrew Fenty,455,0,101
+Thomas Faurel,456,0,101
+James Story,457,0,100
+Blake Ellis,458,0,99
+Mika Brunold,459,0,98
+Pietro Fellin,460,0,98
+Jack Loge,461,0,98
+Andrey Chepelev,462,0,98
+Gianmarco Ferrari,463,0,97
+Alexandr Binda,464,0,97
+Jakub Paul,465,0,96
+Valerio Aboian,466,0,95
+Ognjen Milic,467,0,95
+Blaise Bicknell,468,0,95
+Moerani Bouzige,469,0,95
+Dhakshineswar Suresh,470,0,94
+Bernabe Zapata Miralles,471,0,94
+Bor Artnak,472,0,94
+Carlos Lopez Montagud,473,0,94
+Filippo Moroni,474,0,92
+Takuya Kumasaka,475,0,92
+Dusan Obradovic,476,0,92
+Filip Peliwo,477,0,92
+Nikolay Vylegzhanin,478,0,91
+Eero Vasa,479,0,91
+Henry Searle,480,0,91
+Giovanni Fonio,481,0,90
+Yan Bai,482,0,89
+Braden Shick,483,0,89
+Andrea Guerrieri,484,0,89
+Petr Nesterov,485,0,89
+Manas Dhamne,486,0,89
+Jay Friend,487,0,88
+Lorenzo Joaquin Rodriguez,488,0,88
+Aristotelis Thanos,489,0,87
+Carl Emil Overbeck,490,0,87
+Enrico Dalla Valle,491,0,87
+Edward Winter,492,0,87
+Tsung Hao Huang,493,0,87
+Mirza Basic,494,0,86
+Cannon Kingsley,495,0,86
+Alex Marti Pujolras,496,0,86
+Jake Delaney,497,0,85
+Laurent Lokoli,498,0,84
+Joao Eduardo Schiessl,499,0,84
+Vladyslav Orlov,500,0,84
