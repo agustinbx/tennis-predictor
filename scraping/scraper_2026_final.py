@@ -9,8 +9,8 @@ import random
 
 # --- CONFIGURACIÓN ---
 ARCHIVO_ENTRADA = "atp_torneos_2026_final.csv"
-ARCHIVO_SALIDA = "atp_matches_2025_indetectable.csv"
-ANIO = 2025
+ARCHIVO_SALIDA = "atp_matches_2026_indetectable.csv"
+ANIO = 2026
 
 print(f"🥷 INICIANDO MODO INDETECTABLE ({ANIO})...")
 

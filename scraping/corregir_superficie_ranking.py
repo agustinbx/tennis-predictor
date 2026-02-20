@@ -5,11 +5,11 @@ print("🛠️ INICIANDO CORRECCIÓN DE SUPERFICIES Y RANKINGS...")
 
 # --- ARCHIVOS DE ENTRADA ---
 # Tu archivo con los partidos de 2025 y 2026 (puede ser el raw o el master)
-ARCHIVO_PARTIDOS = "atp_matches_2025_2026_raw.csv" 
+ARCHIVO_PARTIDOS = "atp_matches_2026_full.csv" 
 # Tu archivo con el ranking actual que scrapeamos antes
 ARCHIVO_RANKING = "ranking_actual_2026.csv"
 # Archivo de salida limpio
-ARCHIVO_SALIDA = "atp_matches_2025_2026_CORREGIDO.csv"
+ARCHIVO_SALIDA = "atp_matches_2026_corregido.csv" 
 
 try:
     # 1. CARGAR DATOS
@@ -60,7 +60,7 @@ try:
 
     # Creamos un diccionario rápido: {'Carlos Alcaraz': 2, 'Jannik Sinner': 1}
     # Usamos 'player_slug' porque el scraper de ranking lo guardó así
-    ranking_dict = df_rank.set_index('player_slug')['rank'].to_dict()
+    ranking_dict = df_rank.set_index('player')['rank'].to_dict()
 
     # Función para buscar ranking
     def get_current_rank(nombre, ranking_actual):

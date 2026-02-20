@@ -6,7 +6,7 @@ print("👤 GENERANDO PERFILES (V5.0 - SOLUCIÓN TOTAL)...")
 
 try:
     # 1. Cargar CSV
-    df = pd.read_csv("historial_tenis_COMPLETO.csv")
+    df = pd.read_csv("historialTenis.csv")
     
     # --- A. LIMPIEZA Y FORMATO ---
     df['tourney_id'] = df['tourney_id'].astype(str)
@@ -74,6 +74,8 @@ try:
     # "Cache" para recordar datos si vienen vacíos
     bio_cache = {} 
 
+    total_partidos = {}
+
     for index, row in df.iterrows():
         w = row['winner_name']
         l = row['loser_name']
@@ -81,6 +83,9 @@ try:
         torneo = row['tourney_name']
         ronda = row['round']
         fecha = row['tourney_date']
+
+        total_partidos[w] = total_partidos.get(w, 0) + 1
+        total_partidos[l] = total_partidos.get(l, 0) + 1
         
         # --- 1. GESTIÓN DEL HISTORIAL (RACHA) ---
         rw = racha_tracker.get(w, [])
@@ -132,30 +137,82 @@ try:
         if pd.notna(row.get('loser_rank_points')): mem_l['points'] = row['loser_rank_points']
         bio_cache[l] = mem_l; perfiles[l] = mem_l.copy()
 
-    # --- F. GUARDADO FINAL ---
+    # --- F. INYECTAR ESTADÍSTICAS AVANZADAS, RANKING 2026 Y GUARDADO ---
+    print("   💉 Inyectando estadísticas avanzadas y Ranking actualizado...")
+    
+    # Cargar Stats
+    try:
+        df_stats_adv = pd.read_csv("estadisticas_jugadores_avanzadas.csv")
+        stats_dict_adv = df_stats_adv.set_index('player').to_dict(orient='index')
+    except:
+        print("   ⚠️ No se encontró 'estadisticas_jugadores_avanzadas.csv'.")
+        stats_dict_adv = {}
+
+    # Cargar Ranking Nuevo (El que acabas de scrapear)
+    try:
+        df_ranking = pd.read_csv("ranking_2026.csv")
+        # 🧹 BARRER DUPLICADOS
+        df_ranking = df_ranking.drop_duplicates(subset=['player'], keep='first')
+        
+        # 🧠 EL TRUCO MAGISTRAL: Extraer el nombre completo desde la URL
+        # URL ej: https://www.atptour.com/en/players/jannik-sinner/s0ag/overview
+        def extraer_nombre_real(url):
+            try:
+                slug = str(url).split('/')[5] # Corta la URL y agarra "jannik-sinner"
+                return slug.replace('-', ' ').title() # Lo convierte a "Jannik Sinner"
+            except:
+                return ""
+                
+        # Creamos una nueva columna con el nombre perfecto
+        df_ranking['player_real'] = df_ranking['url_perfil'].apply(extraer_nombre_real)
+        
+        # Ahora usamos 'player_real' como llave del diccionario en lugar del abreviado
+        ranking_dict_fresco = df_ranking.set_index('player_real').to_dict(orient='index')
+        print("   ✅ 'ranking_2026.csv' cargado OK con nombres corregidos.")
+    except Exception as e:
+        print(f"   ⚠️ ERROR REAL con ranking: {e}")
+        ranking_dict_fresco = {}
+
     for jugador, datos in perfiles.items():
+        
+        # 1. Actualizar Ranking y Puntos con la info fresca de hoy (Pisa la memoria vieja)
+        if jugador in ranking_dict_fresco:
+            perfiles[jugador]['rank'] = ranking_dict_fresco[jugador].get('rank', 500)
+            perfiles[jugador]['points'] = ranking_dict_fresco[jugador].get('points', 0)
+
+        # 2. Racha y Momentum
         historial = racha_tracker.get(jugador, [])
-        
-        # Calculamos momentum numérico (Win = 1, Loss = 0)
         victorias = sum(1 for x in historial if x['resultado'] == 'W')
-        momentum = victorias / len(historial) if historial else 0.5
-        
-        perfiles[jugador]['momentum'] = momentum
+        perfiles[jugador]['momentum'] = victorias / len(historial) if historial else 0.5
         perfiles[jugador]['last_5'] = historial
 
-    # Debug
-    print("\n🔎 VERIFICACIÓN FINAL:")
-    if 'Novak Djokovic' in perfiles:
-        racha = perfiles['Novak Djokovic']['last_5']
-        iconos = ["✅" if x==1 else "🔴" for x in racha]
-        print(f"   Novak Djokovic (Últimos 5): {iconos}")
+        # 3. Stats Avanzadas
+        partidos_jugados = total_partidos.get(jugador, 1) # Evitar dividir por cero
         
-    if 'Carlos Alcaraz' in perfiles:
-        p = perfiles['Carlos Alcaraz']
-        print(f"   Carlos Alcaraz -> Edad: {p['age']}, País: {p['ioc']}")
+        if jugador in stats_dict_adv:
+            datos_extra = stats_dict_adv[jugador]
+            perfiles[jugador]['serve_win'] = datos_extra.get('serve_win_pct', 65.0)
+            perfiles[jugador]['bp_saved'] = datos_extra.get('bp_saved_pct', 60.0)
+            perfiles[jugador]['service_hold'] = datos_extra.get('service_hold_pct', 75.0)
+            
+            # Ajuste de Aces y Dobles Faltas dividiendo por cantidad de partidos
+            perfiles[jugador]['aces'] = datos_extra.get('aces_avg', 0.0) / partidos_jugados
+            perfiles[jugador]['df'] = datos_extra.get('df_avg', 0.0) / partidos_jugados
+        else:
+            perfiles[jugador]['serve_win'] = 65.0 
+            perfiles[jugador]['bp_saved'] = 60.0 
+            perfiles[jugador]['service_hold'] = 75.0
+            perfiles[jugador]['aces'] = 0.0
+            perfiles[jugador]['df'] = 0.0
+
+    # Debug Final
+    print("\n🔎 VERIFICACIÓN FINAL:")
+    if 'Jannik Sinner' in perfiles:
+        p = perfiles['Jannik Sinner']
+        print(f"   Jannik Sinner -> Ranking: {p.get('rank')} | Puntos: {p.get('points')}")
 
     joblib.dump(perfiles, 'perfiles_jugadores.pkl')
-    print("\n✅ Archivo actualizado con éxito.")
+    print("\n✅ Archivo de perfiles actualizado con Ranking Fresco. ¡Listo para la App!")
 
 except Exception as e:
     print(f"❌ Error: {e}")

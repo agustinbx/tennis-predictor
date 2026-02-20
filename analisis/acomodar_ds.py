@@ -6,7 +6,7 @@ import os
 ruta_script = os.path.dirname(os.path.abspath(__file__))
 ruta_raiz = os.path.dirname(ruta_script)
     
-ruta_raiz = os.path.join(ruta_raiz, "prediccion") 
+ruta_raiz = os.path.join(ruta_raiz, "scraping") 
 
 def get_path(archivo):
     return os.path.join(ruta_raiz, archivo)

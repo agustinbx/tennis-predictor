@@ -36,7 +36,18 @@ mapa_superficies = {
     'Canada': 'Hard',
     'Shanghai': 'Hard',
     'Paris': 'Hard',
-    'Rotterdam': 'Hard' # Agregado por tu ejemplo
+    'Rotterdam': 'Hard', 
+    'perth-sydney': 'Hard',
+    'brisbane': 'Hard',
+    'hong-kong': 'Hard',
+    'adelaide': 'Hard',
+    'auckland': 'Hard',
+    'montpellier': 'Clay',
+    'dallas': 'Hard',
+    'buenos-aires': 'Clay',
+    'doha': 'Hard',
+    'rio-de-janeiro': 'Clay',
+    'delray-beach': 'Hard'
 }
 
 # 3. LISTAS PARA LOS DATOS NUEVOS

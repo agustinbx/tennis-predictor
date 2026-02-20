@@ -3,7 +3,7 @@ import os
 
 # --- CONFIGURACIÓN ---
 ARCHIVO_HISTORICO = "historial_tenis.csv"       # Tu archivo original 2000-2024
-ARCHIVO_NUEVO = "atp_matches_2025_2026_CORREGIDO.csv"   # El archivo nuevo enriquecido (o el raw)
+ARCHIVO_NUEVO = "atp_matches_2025_2026_unidos.csv"   # El archivo nuevo enriquecido (o el raw)
 ARCHIVO_SALIDA = "historial_tenis_COMPLETO.csv" # El resultado final
 
 print("🧬 INICIANDO FUSIÓN FINAL...")
