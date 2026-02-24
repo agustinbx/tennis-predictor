@@ -52,7 +52,7 @@ def cargar_todo():
         scaler = joblib.load(get_path_pred('scaler_final.pkl'))
         stats_dict = joblib.load(get_path_pred('stats_superficie_v2.pkl'))
         
-        # 🎾 2. DATOS VIVOS (Leen de /scraping)
+        
         perfiles = joblib.load(get_path_scrap('perfiles_jugadores.pkl'))
         
     except FileNotFoundError as e:
