@@ -83,8 +83,9 @@ for i, url in enumerate(urls):
         matches = soup.find_all('div', class_='match')
         
         if not matches:
-            print("   ⚠️ 0 partidos. (¿Posible bloqueo o torneo vacío?)")
-            continue
+            print("   ⚠️ 0 partidos. Se asume que llegamos a torneos futuros.")
+            print("   🛑 ¡Deteniendo el scraper para ahorrar tiempo!")
+            break  # Esto rompe el bucle y pasa directo a guardar
             
         print(f"   ✅ ¡{len(matches)} PARTIDOS!")
         

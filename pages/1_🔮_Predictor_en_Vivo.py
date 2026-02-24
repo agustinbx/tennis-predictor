@@ -30,36 +30,45 @@ st.write("---")
 # CARGAR ARCHIVOS 
 @st.cache_resource
 def cargar_todo():
-    # Detectar rutas
+    # Detectar la carpeta principal del proyecto (Subimos un nivel desde /pages)
     ruta_script = os.path.dirname(os.path.abspath(__file__))
-    ruta_raiz = os.path.dirname(ruta_script)
+    ruta_proyecto = os.path.dirname(ruta_script) 
     
-    ruta_raiz = os.path.join(ruta_raiz, "prediccion") 
+    # --- LA BIFURCACIÓN: Definimos las dos carpetas ---
+    ruta_prediccion = os.path.join(ruta_proyecto, "prediccion")
+    ruta_scraping = os.path.join(ruta_proyecto, "scraping") 
 
-    def get_path(archivo):
-        return os.path.join(ruta_raiz, archivo)
+    # Funciones auxiliares para buscar en la carpeta correcta
+    def get_path_pred(archivo):
+        return os.path.join(ruta_prediccion, archivo)
+        
+    def get_path_scrap(archivo):
+        return os.path.join(ruta_scraping, archivo)
 
     try:
-        # Cargamos AMBOS modelos
-        model_xgb = joblib.load(get_path('modelo_xgboost_final.pkl'))
-        model_log = joblib.load(get_path('modelo_logistico_final.pkl'))
+        # 🧠 1. MODELOS ESTÁTICOS (Leen de /prediccion)
+        model_xgb = joblib.load(get_path_pred('modelo_xgboost_final.pkl'))
+        model_log = joblib.load(get_path_pred('modelo_logistico_final.pkl'))
+        scaler = joblib.load(get_path_pred('scaler_final.pkl'))
+        stats_dict = joblib.load(get_path_pred('stats_superficie_v2.pkl'))
         
-        # Scaler y los datos 
-        scaler = joblib.load(get_path('scaler_final.pkl'))
-        stats_dict = joblib.load(get_path('stats_superficie_v2.pkl'))
-        perfiles = joblib.load(get_path('perfiles_jugadores.pkl'))
+        # 🎾 2. DATOS VIVOS (Leen de /scraping)
+        perfiles = joblib.load(get_path_scrap('perfiles_jugadores.pkl'))
         
     except FileNotFoundError as e:
-        st.error(f"Faltan archivos. Asegúrate de tener 'modelo_xgboost_final.pkl' y 'modelo_logistico_final.pkl'. Error: {e}")
+        st.error(f"Faltan archivos fundamentales. Error técnico: {e}")
         st.stop()
 
+    # 📊 3. HISTORIAL Y RANKING (Leen de /scraping)
     try:
-        df_history = pd.read_csv(get_path("historial_tenis.csv"))
+        df_history = pd.read_csv(get_path_scrap("historialTenis.csv"), low_memory=False)
     except:
         df_history = pd.DataFrame() 
     
     try:
-        df_rank_26 = pd.read_csv(get_path("ranking_actual_2026.csv"))
+        df_rank_26 = pd.read_csv(get_path_scrap("ranking_2026.csv"))
+        # (Asegúrate de que 'player_slug' exista en tu CSV de ranking, 
+        # o cámbialo por 'player' / 'Nombre Completo' según como lo hayas dejado en tu scraper)
         ranking_2026_dict = dict(zip(df_rank_26['player_slug'], df_rank_26['rank']))
     except:
         ranking_2026_dict = {}

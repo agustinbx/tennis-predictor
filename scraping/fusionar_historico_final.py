@@ -4,7 +4,7 @@ import os
 # --- CONFIGURACIÓN ---
 ARCHIVO_HISTORICO = "historial_tenis.csv"       # Tu archivo original 2000-2024
 ARCHIVO_NUEVO = "atp_matches_2025_2026_unidos.csv"   # El archivo nuevo enriquecido (o el raw)
-ARCHIVO_SALIDA = "historial_tenis_COMPLETO.csv" # El resultado final
+ARCHIVO_SALIDA = "historialTenis.csv" # El resultado final
 
 print("🧬 INICIANDO FUSIÓN FINAL...")
 
@@ -62,8 +62,31 @@ try:
     df_total = pd.concat([df_hist, df_new_aligned], ignore_index=True)
     
     # 4. LIMPIEZA FINAL
-    # Convertir tourney_date a formato numérico si es necesario
-    df_total['tourney_date'] = pd.to_numeric(df_total['tourney_date'], errors='coerce').fillna(20260101).astype(int)
+    # 4. LIMPIEZA FINAL Y ARREGLO DE FECHAS
+    print("⏳ Reparando línea de tiempo...")
+    df_total['tourney_date'] = pd.to_numeric(df_total['tourney_date'], errors='coerce').fillna(0).astype(int)
+    
+    # Función para detectar los "0" y ponerles la fecha correcta (2025 o 2026)
+    def arreglar_fecha(fila):
+        fecha = fila['tourney_date']
+        if fecha > 20000000: # Si ya es una fecha histórica válida (ej: 20150821), se queda igual
+            return fecha
+        
+        # Si es 0, buscamos el año escondido en el ID del torneo (ej: "2026-miami-1")
+        try:
+            id_torneo = str(fila['tourney_id'])
+            anio = id_torneo.split('-')[0] 
+            if len(anio) == 4 and anio.isdigit():
+                return int(anio) * 10000 + 101 # Lo convierte mágicamente en 20260101 o 20250101
+        except:
+            pass
+        return 20260101 # Si todo falla, asumimos que es de ahora
+
+    # Aplicamos la cura a todas las filas
+    df_total['tourney_date'] = df_total.apply(arreglar_fecha, axis=1)
+    
+    # ¡Ahora SÍ ordenamos! Primero los viejos, último los nuevos.
+    df_total.sort_values(by=['tourney_date', 'match_num'], inplace=True)
     
     # Ordenar por fecha (opcional)
     df_total.sort_values(by=['tourney_date', 'match_num'], inplace=True)

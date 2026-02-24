@@ -10,7 +10,7 @@ print("🚀 ENTRENANDO EL NUEVO CAMPEÓN (XGBOOST)...")
 
 # --- 1. PREPARACIÓN DE DATOS (Exactamente igual que antes) ---
 try:
-    df = pd.read_csv("historial_tenis_COMPLETO.csv")
+    df = pd.read_csv("historialTenis.csv")
     df['minutes'] = df['minutes'].fillna(100)
     df['tourney_date'] = pd.to_numeric(df['tourney_date'], errors='coerce')
     df = df.sort_values(by=['tourney_date', 'match_num'])

@@ -7,7 +7,7 @@ print("🛠️ INICIANDO CORRECCIÓN DE SUPERFICIES Y RANKINGS...")
 # Tu archivo con los partidos de 2025 y 2026 (puede ser el raw o el master)
 ARCHIVO_PARTIDOS = "atp_matches_2026_full.csv" 
 # Tu archivo con el ranking actual que scrapeamos antes
-ARCHIVO_RANKING = "ranking_actual_2026.csv"
+ARCHIVO_RANKING = "ranking_2026.csv"
 # Archivo de salida limpio
 ARCHIVO_SALIDA = "atp_matches_2026_corregido.csv" 
 

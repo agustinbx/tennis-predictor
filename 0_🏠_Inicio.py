@@ -49,3 +49,15 @@ Analiza variables complejas como:
 
 # Botón decorativo
 st.info("💡 Tip: El modelo tiene mayor precisión en superficies duras (Hard Court).")
+
+st.markdown("---") # Línea divisoria
+
+st.markdown("""
+    <div style='text-align: center; color: #666; font-size: 12px;'>
+        Tennis databases, files, and algorithms by 
+        <a href='http://www.tennisabstract.com/' target='_blank'>Jeff Sackmann / Tennis Abstract</a> 
+        is licensed under a 
+        <a href='https://creativecommons.org/licenses/by-nc-sa/4.0/' target='_blank'>CC BY-NC-SA 4.0 License</a>.<br>
+        Based on a work at <a href='https://github.com/JeffSackmann' target='_blank'>github.com/JeffSackmann</a>.
+    </div>
+    """, unsafe_allow_html=True)
