@@ -16,6 +16,14 @@ st.set_page_config(page_title="Ranking ATP", page_icon="🏆", layout="wide")
 
 st.title("🏆 Ranking ATP en Vivo & Perfiles")
 
+hide_st_style = """
+            <style>
+            #MainMenu {visibility: hidden;} /* Oculta los 3 puntitos de arriba a la derecha */
+            footer {visibility: hidden;} /* Oculta el "Made with Streamlit" de abajo */
+            </style>
+            """
+st.markdown(hide_st_style, unsafe_allow_html=True)
+
 # --- BOTÓN DE ACTUALIZACIÓN ---
 # Importamos el actualizador que acabamos de crear
 from actualizador_maestro import ejecutar_pipeline

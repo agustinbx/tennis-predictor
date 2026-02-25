@@ -10,9 +10,8 @@ st.title("🎾 ATP Prediction Pro 2026")
 
 hide_st_style = """
             <style>
-            #MainMenu {visibility: hidden;}
-            footer {visibility: hidden;}
-            header {visibility: hidden;}
+            #MainMenu {visibility: hidden;} /* Oculta los 3 puntitos de arriba a la derecha */
+            footer {visibility: hidden;} /* Oculta el "Made with Streamlit" de abajo */
             </style>
             """
 st.markdown(hide_st_style, unsafe_allow_html=True)
