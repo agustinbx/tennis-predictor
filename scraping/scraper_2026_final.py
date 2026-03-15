@@ -7,9 +7,11 @@ from bs4 import BeautifulSoup
 import time
 import random
 
-# --- CONFIGURACIÓN ---
-ARCHIVO_ENTRADA = "atp_torneos_2026_final.csv"
-ARCHIVO_SALIDA = "atp_matches_2026_indetectable.csv"
+import os
+
+ruta_script = os.path.dirname(os.path.abspath(__file__))
+ARCHIVO_ENTRADA = os.path.join(ruta_script, "atp_torneos_2026_final.csv")
+ARCHIVO_SALIDA = os.path.join(ruta_script, "atp_matches_2026_indetectable.csv")
 ANIO = 2026
 
 print(f"🥷 INICIANDO MODO INDETECTABLE ({ANIO})...")
@@ -74,7 +76,7 @@ options.add_argument("--start-maximized")
 # options.add_argument("--headless") # NO uses headless con Cloudflare
 
 print("🚀 Lanzando Chrome parcheado (puede tardar unos segundos)...")
-driver = uc.Chrome(options=options, version_main=144)
+driver = uc.Chrome(options=options, version_main=146)
 
 # 3. BUCLE DE TORNEOS
 for i, url in enumerate(urls_nuevas):
@@ -83,7 +85,8 @@ for i, url in enumerate(urls_nuevas):
     print(f"   Link: {url}")
     
     torneo_matches_temp = []
-
+    
+    try:
         driver.get(url)
         
         # TIEMPO DE SEGURIDAD PARA CLOUDFLARE
