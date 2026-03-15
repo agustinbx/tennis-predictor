@@ -140,7 +140,44 @@ Aquí es donde la matemática ocurre. Transformamos "nombres de jugadores" en "n
 
 ---
 
-## 5. Fase de Backend para la App
+## 5. Fase de Backend (API REST y Base de Datos)
+
+Aquí es donde "desacoplamos" los datos y el modelo predictivo de la interfaz web, creando una aplicación real en la que el Frontend y el Backend están separados.
+
+### 📄 `api/database.py` y `api/models_db.py`
+
+**Propósito:** Definir y configurar una base de datos relacional (por defecto, SQLite) para dejar de depender de leer archivos `.csv` o `.pkl` pesados constantemente en la app visual.
+
+- **Tecnologías:**
+  - `SQLAlchemy`: Un ORM (Migra y maneja la base de datos de manera orientada a objetos usando Python en vez de consultas SQL crudas).
+- **Lógica:**
+  - `PlayerProfile`: Crea una tabla de jugadores donde cada uno es un renglón con sus estadísticas (Aces, Edad, Nacionalidad, etc).
+  - `MatchStats`: Crea una tabla que asocia al jugador con su porcentaje de victorias en cada superficie (Hard, Clay, Grass).
+
+### 📄 `api/cargar_datos_db.py`
+
+**Propósito:** Es un script de "Migración de Datos".
+
+- **¿Qué hace?**
+  - Lee los `.pkl` finales provenientes de las etapas anteriores y mediante un bucle extrae todo su contenido e inserta jugador por jugador adentro de la nueva base de datos. Se corre una sola vez después de entrenar para "actualizar" la base de datos.
+
+### 📄 `api/main.py`
+
+**Propósito:** Es el "Cerebro Servidor" (Backend). Arranca un proceso que "escucha" peticiones a través de internet (o localmente en el puerto 8000/8001/8002).
+
+- **Librerías:**
+  - `FastAPI`: Construye la API.
+  - `Uvicorn`: El servidor web que aloja a FastAPI.
+- **Lógica:**
+  1. Al iniciar la aplicación, es el **único** archivo que carga los voluminosos modelos de XGBoost en la memoria RAM `(joblib.load)`.
+  2. Expone *Endpoints* para que el frontend pida cosas:
+     - `GET /players/`: Devuelve todos los nombres de la base de datos.
+     - `GET /players/{nombre}`: Busca todo el perfil de un jugador usando SQL y lo devuelve en milisegundos.
+     - `POST /predict`: El endpoint estrella. Recibe los nombres de los dos jugadores que van a enfrentarse, busca la info extra en la base de datos (skills, etc), arma la estructura matemática, llama al modelo de Machine Learning (`predict_proba`) y devuelve solo el "quién gana y con qué confianza".
+
+---
+
+## 6. Fase de Modelado para App Antigua (Descartar en nueva config)
 
 ### 📄 `generar_perfiles.py`
 
@@ -157,7 +194,7 @@ Aquí es donde la matemática ocurre. Transformamos "nombres de jugadores" en "n
 
 ---
 
-## 6. Fase de Frontend (Visualización)
+## 7. Fase de Frontend (Visualización y Consumo de API)
 
 ### 📄 `laboratorio.py`
 
@@ -205,5 +242,5 @@ Si quisieras actualizar todo el proyecto desde cero con datos nuevos, el orden d
 5. `acomodar_ds.py` (Limpieza final y estandarización).
 6. `generar_perfiles.py` (Crear base de datos para la App).
 7. `comparar_modelos.py` (Verificar métricas).
-8. `predict_xgboost.py` (Entrenar cerebro final).
-9. **Ejecutar la App** (`streamlit run app.py`).
+9. `python -m uvicorn api.main:app` (Encender el servidor backend).
+10. **Ejecutar la App** (`python -m streamlit run 0_🏠_Inicio.py`).

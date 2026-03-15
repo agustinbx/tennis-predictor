@@ -14,7 +14,7 @@ ANIO = 2026
 
 print(f"🥷 INICIANDO MODO INDETECTABLE ({ANIO})...")
 
-# 1. PREPARAR DATOS
+# 1. PREPARAR DATOS Y LISTAR TORNEOS COMPLETADOS
 try:
     df = pd.read_csv(ARCHIVO_ENTRADA)
     urls = []
@@ -41,7 +41,30 @@ try:
         except:
             pass
 except Exception as e:
-    print(f"❌ Error leyendo CSV: {e}")
+    print(f"❌ Error leyendo CSV origen: {e}")
+    exit()
+
+# --- NUEVO: FILTRO DE TORNEOS YA DESCARGADOS ---
+torneos_descargados = set()
+try:
+    df_existente = pd.read_csv(ARCHIVO_SALIDA)
+    torneos_descargados = set(df_existente['tourney_name'].unique())
+    print(f"✅ Se encontraron {len(torneos_descargados)} torneos ya descargados en la base de datos local.")
+except FileNotFoundError:
+    print("ℹ️ No se encontró historial previo de 2026. Se creará desde cero.")
+
+# Filtrar listas
+urls_nuevas = []
+names_nuevos = []
+for u, n in zip(urls, names):
+    if n not in torneos_descargados:
+        urls_nuevas.append(u)
+        names_nuevos.append(n)
+        
+print(f"⏭️ Torneos a descargar HOY: {len(urls_nuevas)} (Omitiendo {len(urls) - len(urls_nuevas)} ya guardados)")
+
+if not urls_nuevas:
+    print("🚀 ¡Todo está actualizado! No hay torneos nuevos para descargar.")
     exit()
 
 # 2. INICIAR NAVEGADOR INDETECTABLE
@@ -53,15 +76,14 @@ options.add_argument("--start-maximized")
 print("🚀 Lanzando Chrome parcheado (puede tardar unos segundos)...")
 driver = uc.Chrome(options=options, version_main=144)
 
-all_matches = []
-
 # 3. BUCLE DE TORNEOS
-for i, url in enumerate(urls):
-    torneo = names[i]
-    print(f"\n🌍 [{i+1}/{len(urls)}] {torneo}")
+for i, url in enumerate(urls_nuevas):
+    torneo = names_nuevos[i]
+    print(f"\n🌍 [{i+1}/{len(urls_nuevas)}] {torneo}")
     print(f"   Link: {url}")
     
-    try:
+    torneo_matches_temp = []
+
         driver.get(url)
         
         # TIEMPO DE SEGURIDAD PARA CLOUDFLARE
@@ -116,7 +138,7 @@ for i, url in enumerate(urls):
                     v1, v2 = sw[k].get_text(strip=True), sl[k].get_text(strip=True)
                     if v1 and v2: score_parts.append(f"{v1}-{v2}")
                 
-                all_matches.append({
+                torneo_matches_temp.append({
                     'tourney_id': f"{ANIO}-{torneo}-{i}",
                     'tourney_name': torneo,
                     'surface': 'Hard',
@@ -129,19 +151,20 @@ for i, url in enumerate(urls):
                 count += 1
             except: continue
             
+        # GUARDADO PARCIAL INMEDIATO DESPUÉS DE CADA TORNEO EXITOSO
+        if torneo_matches_temp:
+            df_new = pd.DataFrame(torneo_matches_temp)
+            # Rellenar columnas extra para compatibilidad
+            cols = ['draw_size','tourney_level','tourney_date','match_num','winner_id','winner_seed','winner_entry','winner_hand','winner_ht','winner_ioc','winner_age','loser_id','loser_seed','loser_entry','loser_hand','loser_ht','loser_ioc','loser_age','best_of','winner_rank','winner_rank_points','loser_rank','loser_rank_points']
+            for c in cols: df_new[c] = 0
+            
+            import os
+            es_nuevo = not os.path.exists(ARCHIVO_SALIDA)
+            df_new.to_csv(ARCHIVO_SALIDA, mode='a', header=es_nuevo, index=False)
+            print(f"   💾 Progreso guardado: {len(df_new)} partidos añadidos.")
+            
     except Exception as e:
         print(f"   ❌ Error: {e}")
 
 driver.quit()
-
-# 4. GUARDAR
-if all_matches:
-    df_new = pd.DataFrame(all_matches)
-    # Rellenar columnas extra para compatibilidad
-    cols = ['draw_size','tourney_level','tourney_date','match_num','winner_id','winner_seed','winner_entry','winner_hand','winner_ht','winner_ioc','winner_age','loser_id','loser_seed','loser_entry','loser_hand','loser_ht','loser_ioc','loser_age','best_of','winner_rank','winner_rank_points','loser_rank','loser_rank_points']
-    for c in cols: df_new[c] = 0
-    
-    df_new.to_csv(ARCHIVO_SALIDA, index=False)
-    print(f"\n🎉 ¡ÉXITO! {len(df_new)} partidos guardados en {ARCHIVO_SALIDA}")
-else:
-    print("\n❌ No se bajaron datos.")
+print("\n🎉 ¡PROCESO DE SCRAPING FINALIZADO!")

@@ -1,0 +1,46 @@
+name: ATP Tennis ETL y MLOps Pipeline
+
+on:
+  push:
+    paths:
+      - 'scraping/atp_matches_2026_indetectable.csv'
+      - 'scraping/ranking_actual_2026.csv'
+  workflow_dispatch:  # Permite ejecución manual desde GitHub
+
+jobs:
+  run-pipeline:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+        
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          
+      - name: Instalar dependencias
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          
+      - name: Ejecutar Pipeline ETL y Re-entrenamiento
+        run: |
+          python scripts/run_etl_pipeline.py
+          
+      - name: Commit y Push de Modelos y BDD procesados
+        run: |
+          git config --global user.name "GitHub Actions Bot"
+          git config --global user.email "actions@github.com"
+          
+          # Agregamos los archivos estáticos que Python genera
+          git add data/
+          git add prediccion/*.pkl
+          git add api/atp_tennis.db
+          
+          # Si hubo cambios (git diff no está vacío), commitear y pushear
+          git diff --quiet && git diff --staged --quiet || git commit -m "🤖 Auto-Update: ETL completado, BD actualizada y Modelo XGBoost reentrenado"
+          
+          # Ignorar errores si no hay nada que pushear
+          git push || echo "No changes to push"
