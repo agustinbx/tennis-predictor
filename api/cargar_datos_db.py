@@ -9,7 +9,7 @@ from api.database import SessionLocal, engine, Base
 from api.models_db import PlayerProfile, MatchStats
 
 # 1. Crear las tablas en la BD
-print("⚙️ Creando tablas en la base de datos...")
+print("[CONFIG] Creando tablas en la base de datos...")
 Base.metadata.create_all(bind=engine)
 
 def load_data():
@@ -17,7 +17,7 @@ def load_data():
     
     # 2. Cargar perfiles
     try:
-        print("📥 Cargando perfiles_jugadores.pkl...")
+        print("[UPLOAD] Cargando perfiles_jugadores.pkl...")
         perfiles = joblib.load("scraping/perfiles_jugadores.pkl")
         
         # Limpiamos tabla antes de insertar (para evitar duplicados al correr varias veces)
@@ -42,14 +42,14 @@ def load_data():
             )
             db.add(jugador)
             
-        print(f"✅ Se insertaron {len(perfiles)} jugadores.")
+        print(f"[OK] Se insertaron {len(perfiles)} jugadores.")
 
     except FileNotFoundError:
-        print("❌ Archivo scraping/perfiles_jugadores.pkl no encontrado.")
+        print("[FAIL] Archivo scraping/perfiles_jugadores.pkl no encontrado.")
         
     # 3. Cargar estadísticas de superficie
     try:
-        print("📥 Cargando stats_superficie_v2.pkl...")
+        print("[UPLOAD] Cargando stats_superficie_v2.pkl...")
         stats = joblib.load("prediccion/stats_superficie_v2.pkl")
         
         db.query(MatchStats).delete()
@@ -64,14 +64,14 @@ def load_data():
             db.add(stat)
             count += 1
             
-        print(f"✅ Se insertaron {count} estadísticas de superficie.")
+        print(f"[OK] Se insertaron {count} estadísticas de superficie.")
     except FileNotFoundError:
-        print("❌ Archivo prediccion/stats_superficie_v2.pkl no encontrado.")
+        print("[FAIL] Archivo prediccion/stats_superficie_v2.pkl no encontrado.")
 
     # Guardar cambios
     db.commit()
     db.close()
-    print("🚀 Migración finalizada con éxito!")
+    print("[START] Migración finalizada con éxito!")
 
 if __name__ == "__main__":
     load_data()

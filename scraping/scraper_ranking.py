@@ -1,5 +1,8 @@
 import pandas as pd
-import undetected_chromedriver as uc
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent))
+from chrome_helper import create_chrome_driver
 from bs4 import BeautifulSoup
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -10,11 +13,9 @@ import re
 URL_RANKING = "https://www.atptour.com/en/rankings/singles?rankRange=1-400"
 ARCHIVO_SALIDA = "ranking_2026.csv"
 
-print("🏆 RE-ESCANEO DE RANKING (Modo Rastreador por Nombre)...")
+print("[TOP] RE-ESCANEO DE RANKING (Modo Rastreador por Nombre)...")
 
-options = uc.ChromeOptions()
-options.add_argument("--start-maximized")
-driver = uc.Chrome(options=options, version_main=144)
+driver = create_chrome_driver()
 
 data_ranking = []
 
@@ -23,7 +24,7 @@ try:
     print("⏳ Esperando carga de la página...")
     time.sleep(4)
     
-    # --- 🛡️ EL ASESINO DE COOKIES ---
+    # --- [SHIELD] EL ASESINO DE COOKIES ---
     try:
         btn_cookies = WebDriverWait(driver, 5).until(
             EC.element_to_be_clickable((By.ID, "onetrust-accept-btn-handler"))
@@ -37,8 +38,8 @@ try:
             document.body.style.overflow = 'scroll';
         """)
 
-    # --- 📜 AUTO-SCROLL ---
-    print("📜 Deslizando para despertar a la tabla...")
+    # --- [SCROLL] AUTO-SCROLL ---
+    print("[SCROLL] Deslizando para despertar a la tabla...")
     for _ in range(6):
         driver.execute_script("window.scrollBy(0, 1500);")
         time.sleep(1.5)
@@ -48,7 +49,7 @@ try:
     
     if tabla:
         filas = tabla.find('tbody').find_all('tr')
-        print(f"✅ Encontrados {len(filas)} jugadores. Extrayendo datos...")
+        print(f"[OK] Encontrados {len(filas)} jugadores. Extrayendo datos...")
         
         for index, row in enumerate(filas):
             try:
@@ -57,7 +58,7 @@ try:
                 # CHIVATO: Imprimir exactamente qué celdas ve el robot en el primer jugador
                 if index == 0:
                     textos_celdas = [td.get_text(strip=True) for td in cols]
-                    print(f"\n🔍 [DEBUG FILA 1] Esto es lo que lee el robot en cada celda:\n{textos_celdas}\n")
+                    print(f"\n[SEARCH] [DEBUG FILA 1] Esto es lo que lee el robot en cada celda:\n{textos_celdas}\n")
 
                 # 1. Ranking (Extraemos el número de la primera columna)
                 rank_limpio = re.sub(r'\D', '', cols[0].get_text(strip=True))
@@ -78,7 +79,7 @@ try:
                 
                 if index_nombre == -1: continue # Si no hay nombre, saltamos
 
-                # 3. 🧠 EXTRAER PUNTOS (Buscando en las celdas a la derecha del nombre)
+                # 3. [BRAIN] EXTRAER PUNTOS (Buscando en las celdas a la derecha del nombre)
                 puntos = 0
                 # Escaneamos las siguientes 4 celdas después del nombre
                 for td in cols[index_nombre+1 : index_nombre+5]:
@@ -107,11 +108,11 @@ try:
     # --- GUARDADO ---
     if len(data_ranking) > 0:
         pd.DataFrame(data_ranking).to_csv(ARCHIVO_SALIDA, index=False)
-        print(f"\n🎉 ¡Ganamos! Archivo '{ARCHIVO_SALIDA}' generado correctamente.")
+        print(f"\n[DONE] ¡Ganamos! Archivo '{ARCHIVO_SALIDA}' generado correctamente.")
     else:
-        print("\n❌ CRÍTICO: No se extrajo nada.")
+        print("\n[FAIL] CRÍTICO: No se extrajo nada.")
 
 except Exception as e:
-    print(f"❌ Error General: {e}")
+    print(f"[FAIL] Error General: {e}")
 finally:
     driver.quit()

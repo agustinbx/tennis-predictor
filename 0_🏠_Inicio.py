@@ -1,5 +1,15 @@
+"""
+Página de inicio de la aplicación ATP Predictor.
+"""
 import streamlit as st
 from PIL import Image
+import sys
+from pathlib import Path
+
+# Agregar src al path
+src_path = Path(__file__).parent / "src"
+if str(src_path) not in sys.path:
+    sys.path.insert(0, str(src_path))
 
 st.set_page_config(
     page_title="ATP Predictor Pro",
@@ -8,12 +18,13 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# Ocultar elementos de Streamlit
 hide_st_style = """
-            <style>
-            #MainMenu {visibility: hidden;} /* Oculta los 3 puntitos de arriba a la derecha */
-            footer {visibility: hidden;} /* Oculta el "Made with Streamlit" de abajo */
-            </style>
-            """
+<style>
+#MainMenu {visibility: hidden;}
+footer {visibility: hidden;}
+</style>
+"""
 st.markdown(hide_st_style, unsafe_allow_html=True)
 
 # Título Estilizado
@@ -22,15 +33,15 @@ st.markdown("<h3 style='text-align: center; color: #64748B;'>Inteligencia Artifi
 
 st.write("---")
 
-# Métricas 
+# Métricas
 col1, col2, col3 = st.columns(3)
-col1.metric("Precisión del Modelo", "72.36%", "+1.2%")
+col1.metric("Precisión del Modelo", "70.41%", "Corrección Anti-Leakage")
 col2.metric("Partidos Analizados", "+30,000", "2000-2026")
 col3.metric("Ranking Actualizado", "2026", "Live")
 
 st.write("---")
 
-# Imagen o Banner (Opcional)
+# Descripción
 st.markdown("""
 ### 🚀 ¿Qué puede hacer esta App?
 
@@ -42,14 +53,13 @@ Analiza variables complejas como:
 * 📊 **Jerarquía:** Diferencia real de puntos ATP (no solo ranking).
 
 ### 👈 Usa el menú de la izquierda para navegar
-* **🏆 Torneos:** Ve los partidos reales programados para hoy (Scraping en vivo) (Proximamente).
+* **🏆 Torneos:** Ve los partidos reales programados para hoy (Scraping en vivo) (Próximamente).
 * **🔮 Predictor:** Simula cualquier partido hipotético (ej: Sinner vs Alcaraz).
 """)
 
-# Botón decorativo
 st.info("💡 Tip: El modelo tiene mayor precisión en superficies duras (Hard Court).")
 
-st.markdown("---") # Línea divisoria
+st.markdown("---")
 
 st.markdown("""
     <div style='text-align: center; color: #666; font-size: 12px;'>
@@ -59,4 +69,4 @@ st.markdown("""
         <a href='https://creativecommons.org/licenses/by-nc-sa/4.0/' target='_blank'>CC BY-NC-SA 4.0 License</a>.<br>
         Based on a work at <a href='https://github.com/JeffSackmann' target='_blank'>github.com/JeffSackmann</a>.
     </div>
-    """, unsafe_allow_html=True)
+""", unsafe_allow_html=True)

@@ -1,51 +1,74 @@
+"""
+Página de análisis y métricas de modelos.
+Muestra comparación de modelos y feature importance.
+"""
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import os
+import sys
+from pathlib import Path
+
+# Agregar src al path
+src_path = Path(__file__).parent.parent / "src"
+if str(src_path) not in sys.path:
+    sys.path.insert(0, str(src_path))
+
+try:
+    from streamlit_app.utils import apply_style, load_comparison_results, load_feature_importance
+except ImportError:
+    # Fallback
+    PROJECT_ROOT = Path(__file__).parent.parent
+    
+    def apply_style():
+        st.markdown("""
+            <style>
+            #MainMenu {visibility: hidden;}
+            footer {visibility: hidden;}
+            </style>
+        """, unsafe_allow_html=True)
+    
+    def load_comparison_results():
+        path = PROJECT_ROOT / "resultados_comparacion.csv"
+        if path.exists():
+            return pd.read_csv(path)
+        return None
+    
+    def load_feature_importance():
+        path = PROJECT_ROOT / "importancia_real.csv"
+        if path.exists():
+            return pd.read_csv(path)
+        return None
+
 
 st.set_page_config(page_title="Laboratorio IA", page_icon="🧠", layout="wide")
 
 st.title("🧠 Laboratorio de Datos")
 
-hide_st_style = """
-            <style>
-            #MainMenu {visibility: hidden;} /* Oculta los 3 puntitos de arriba a la derecha */
-            footer {visibility: hidden;} /* Oculta el "Made with Streamlit" de abajo */
-            </style>
-            """
-st.markdown(hide_st_style, unsafe_allow_html=True)
+apply_style()
 
 st.markdown("### ⚔️ La Batalla de los Modelos")
-
 st.info("Para elegir el 'cerebro' de esta aplicación, pusimos a competir a 3 algoritmos diferentes. Aquí te explicamos los resultados de forma sencilla.")
 
-# CARGA DE DATOS 
-ruta_script = os.path.dirname(os.path.abspath(__file__))
-ruta_raiz = os.path.dirname(ruta_script)
+# Cargar datos
+df_res = load_comparison_results()
 
-
-try:
-    path_csv = os.path.join(ruta_raiz, "resultados_comparacion.csv")
-    df_res = pd.read_csv(path_csv)
-    df_res['Accuracy %'] = (df_res['Accuracy'] * 100).round(2)
-    df_res = df_res.sort_values('Accuracy', ascending=False)
-except FileNotFoundError:
-    st.error("⚠️ Faltan los resultados. Ejecuta primero 'comparar_modelos.py'.")
+if df_res is None:
+    st.error("⚠️ Faltan los resultados. Ejecuta primero el pipeline de entrenamiento avanzado.")
     st.stop()
 
-# GRÁFICO DE MODELO GANADOR
+df_res['Accuracy %'] = (df_res['Accuracy'] * 100).round(2)
+df_res = df_res.sort_values('Accuracy', ascending=False)
+
+# Gráfico del modelo ganador
 col_graf, col_tabla = st.columns([2, 1])
 
 with col_graf:
     st.subheader("🏆 ¿Quién acertó más?")
     
-    # Colores: Dorado para el ganador, Gris para el resto
-    colors = ['#FFD700' if x == df_res.iloc[0]['Modelo'] else '#E5E7EB' for x in df_res['Modelo']]
-    
     fig = px.bar(
-        df_res, 
-        x='Accuracy %', 
-        y='Modelo', 
+        df_res,
+        x='Accuracy %',
+        y='Modelo',
         orientation='h',
         text='Accuracy %',
         title="Porcentaje de Acierto en Partidos Nuevos",
@@ -66,13 +89,12 @@ with col_tabla:
 
 st.divider()
 
-# EXPLICACIÓN SIN MATEMÁTICA
+# Explicación de modelos
 st.header("🤓 ¿Cómo 'piensa' cada modelo?")
 st.markdown("Imagina que tienes que adivinar quién gana un partido. Estos tres modelos son como tres tipos de personas diferentes intentando adivinar:")
 
 c1, c2, c3 = st.columns(3)
 
-# REGRESIÓN LOGÍSTICA
 with c1:
     st.image("https://cdn-icons-png.flaticon.com/512/2645/2645897.png", width=80)
     st.subheader("1. La Balanza")
@@ -89,7 +111,6 @@ with c1:
     **Veredicto:** Es rápido y lógico, pero a veces el tenis es más complejo que una simple suma.
     """)
 
-# RANDOM FOREST 
 with c2:
     st.image("https://cdn-icons-png.flaticon.com/512/1534/1534938.png", width=80)
     st.subheader("2. La Democracia")
@@ -107,7 +128,6 @@ with c2:
     **Veredicto:** Muy seguro y estable, pero a veces le cuesta ver patrones sutiles.
     """)
 
-# XGBOOST 
 with c3:
     st.image("https://cdn-icons-png.flaticon.com/512/2083/2083213.png", width=80)
     st.subheader("3. El Perfeccionista")
@@ -126,51 +146,47 @@ with c3:
 
 st.divider()
 
-# ANÁLISIS REAL DE VARIABLES 
+# Análisis de variables
 st.subheader("👀 ¿Qué es lo que más mira la IA?")
 st.write("Analizamos matemáticamente qué peso le da el modelo **XGBoost** a cada dato. Aquí están los porcentajes reales:")
 
-# Cargar el archivo de importancia real
-try:
-    path_imp = os.path.join(ruta_raiz, "importancia_real.csv")
-    df_imp = pd.read_csv(path_imp)
-    
-    # Filtrar solo para el modelo ganador (XGBoost)
+df_imp = load_feature_importance()
+
+if df_imp is not None:
+    # Filtrar solo XGBoost
     df_xgboost = df_imp[df_imp['Modelo'] == 'XGBoost'].sort_values('Importancia', ascending=False)
     
-    # Diccionario para nombres bonitos en el gráfico
+    # Nombres bonitos
     nombres_bonitos = {
-        'diff_rank_points': 'Diferencia de Puntos',
+        'diff_elo': 'ELO Rating',
+        'diff_rank_points': 'Puntos ATP',
         'diff_rank': 'Ranking ATP',
         'diff_h2h': 'Historial (H2H)',
         'diff_age': 'Edad',
         'diff_skill': 'Efectividad Superficie',
         'diff_fatigue': 'Fatiga',
         'diff_momentum': 'Racha (Momentum)',
+        'diff_clutch': 'Factor Clutch',
         'diff_ht': 'Altura',
         'diff_home': 'Localía'
     }
     df_xgboost['Nombre'] = df_xgboost['Variable'].map(nombres_bonitos)
     
-    # Gráfico de Barras Horizontal
     fig_imp = px.bar(
-        df_xgboost, 
-        x='Importancia', 
-        y='Nombre', 
+        df_xgboost,
+        x='Importancia',
+        y='Nombre',
         orientation='h',
-        text_auto='.1f', # Muestra el valor con 1 decimal
+        text_auto='.1f',
         title="Impacto de cada variable en la decisión final (%)",
         color='Importancia',
-        color_continuous_scale='Viridis' # Colores profesionales
+        color_continuous_scale='Viridis'
     )
     
-    # Invertir eje Y para que el más importante salga arriba
-    fig_imp.update_layout(yaxis={'categoryorder':'total ascending'})
+    fig_imp.update_layout(yaxis={'categoryorder': 'total ascending'})
     st.plotly_chart(fig_imp, use_container_width=True)
     
-    # Mensaje inteligente según el dato más alto
     top_var = df_xgboost.iloc[0]['Nombre']
     st.info(f"💡 **Conclusión:** El modelo confirma que **{top_var}** es el factor más determinante para predecir al ganador hoy en día.")
-
-except FileNotFoundError:
-    st.warning("⚠️ Aún no has generado el análisis de variables. Ejecuta 'comparar_modelos.py' de nuevo.")
+else:
+    st.warning("⚠️ Aún no has generado el análisis de variables. Ejecuta el pipeline de entrenamiento avanzado de nuevo.")

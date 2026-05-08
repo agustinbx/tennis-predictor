@@ -7,16 +7,16 @@ ARCHIVO_NUEVO = "atp_matches_2026_indetectable.csv" # Tu CSV flaco (recién baja
 ARCHIVO_PERFILES = "perfiles_jugadores.pkl"         # Tu diccionario de datos (bajado antes)
 ARCHIVO_SALIDA = "atp_matches_2026_full.csv"        # El CSV gordo final
 
-print("💉 INICIANDO ENRIQUECIMIENTO DE DATOS...")
+print("[INJECTION] INICIANDO ENRIQUECIMIENTO DE DATOS...")
 
 # 1. CARGAR DATOS
 try:
     df = pd.read_csv(ARCHIVO_NUEVO)
     perfiles = joblib.load(ARCHIVO_PERFILES)
-    print(f"📂 Cargados {len(df)} partidos nuevos.")
-    print(f"📂 Cargados {len(perfiles)} perfiles de jugadores.")
+    print(f"[DATA] Cargados {len(df)} partidos nuevos.")
+    print(f"[DATA] Cargados {len(perfiles)} perfiles de jugadores.")
 except Exception as e:
-    print(f"❌ Error cargando archivos: {e}")
+    print(f"[FAIL] Error cargando archivos: {e}")
     print("Asegúrate de tener 'atp_matches_2026_indetectable.csv' y 'perfiles_jugadores.pkl'")
     exit()
 
@@ -55,7 +55,7 @@ w_ht, w_age, w_rank, w_hand, w_ioc = [], [], [], [], []
 l_ht, l_age, l_rank, l_hand, l_ioc = [], [], [], [], []
 surfaces = []
 
-print("🔄 Cruzando datos...")
+print("[REFRESH] Cruzando datos...")
 
 for index, row in df.iterrows():
     w_name = row['winner_name']
@@ -123,7 +123,7 @@ for col in cols_extra:
 # 5. GUARDAR
 df.to_csv(ARCHIVO_SALIDA, index=False)
 print("\n" + "="*50)
-print(f"✅ ¡ENRIQUECIMIENTO COMPLETADO!")
-print(f"📄 Archivo guardado: {ARCHIVO_SALIDA}")
-print(f"📊 Ahora tienes Ranking, Altura y Edad estimados para 2026.")
+print(f"[OK] ¡ENRIQUECIMIENTO COMPLETADO!")
+print(f"[DOC] Archivo guardado: {ARCHIVO_SALIDA}")
+print(f"[STATS] Ahora tienes Ranking, Altura y Edad estimados para 2026.")
 print("="*50)

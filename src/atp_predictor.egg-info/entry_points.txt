@@ -1,0 +1,2 @@
+[console_scripts]
+atp-api = atp_predictor.api.main:run_server

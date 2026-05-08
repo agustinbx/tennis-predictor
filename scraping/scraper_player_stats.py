@@ -1,5 +1,8 @@
 import pandas as pd
-import undetected_chromedriver as uc
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent))
+from chrome_helper import create_chrome_driver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -7,17 +10,15 @@ import time
 import random
 import re
 
-print("🕵️‍♂️ INICIANDO ROBO DE ESTADÍSTICAS (MODO LECTOR DE TEXTO VISIBLE)...")
+print("[DETECTIVE] INICIANDO ROBO DE ESTADISTICAS (MODO LECTOR DE TEXTO VISIBLE)...")
 
 try:
     df_rank = pd.read_csv("ranking_actual_2026.csv")
 except FileNotFoundError:
-    print("❌ Falta el archivo 'ranking_actual_2026.csv'")
+    print("[FAIL] Falta el archivo 'ranking_actual_2026.csv'")
     exit()
 
-options = uc.ChromeOptions()
-options.add_argument("--start-maximized")
-driver = uc.Chrome(options=options, version_main=144)
+driver = create_chrome_driver()
 
 stats_data = []
 
@@ -44,7 +45,7 @@ for index, row in df_rank.iterrows():
         driver.get(url_stats)
         time.sleep(4.0) # Damos tiempo a que carguen los números
         
-        # --- 🛡️ EL ASESINO DE COOKIES ---
+        # --- [SHIELD] EL ASESINO DE COOKIES ---
         try:
             btn_cookies = WebDriverWait(driver, 5).until(
                 EC.element_to_be_clickable((By.ID, "onetrust-accept-btn-handler"))
@@ -62,7 +63,7 @@ for index, row in df_rank.iterrows():
         driver.execute_script("window.scrollBy(0, 500);")
         time.sleep(1.0)
 
-        # 🧠 LA MAGIA: Extraemos TODO el texto visible de la página, ignorando el HTML
+        # [BRAIN] LA MAGIA: Extraemos TODO el texto visible de la página, ignorando el HTML
         texto_pantalla = driver.find_element(By.TAG_NAME, "body").text
         
         # DEBUG: Guardar pruebas del primer escaneo
@@ -70,7 +71,7 @@ for index, row in df_rank.iterrows():
             driver.save_screenshot("pantalla_robot.png")
             with open("texto_leido.txt", "w", encoding="utf-8") as f:
                 f.write(texto_pantalla)
-            print("   📄 Texto visible guardado en 'texto_leido.txt' para depuración.")
+            print("   [DOC] Texto visible guardado en 'texto_leido.txt' para depuración.")
         
         # Buscamos las métricas leyendo el texto puro
         aces = buscar_numero_en_texto(texto_pantalla, "Aces")
@@ -95,10 +96,10 @@ for index, row in df_rank.iterrows():
         })
         
     except Exception as e:
-        print(f"   ⚠️ Error de conexión con {nombre}: {e}")
+        print(f"   [WARN] Error de conexión con {nombre}: {e}")
 
 df_stats = pd.DataFrame(stats_data)
 df_stats.to_csv("estadisticas_jugadores_avanzadas.csv", index=False)
 driver.quit()
 
-print("\n✅ ¡Escaneo finalizado!")
+print("\n[OK] ¡Escaneo finalizado!")

@@ -1,5 +1,8 @@
 import pandas as pd
-import undetected_chromedriver as uc
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent))
+from chrome_helper import create_chrome_driver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -14,14 +17,14 @@ ARCHIVO_ENTRADA = os.path.join(ruta_script, "atp_torneos_2026_final.csv")
 ARCHIVO_SALIDA = os.path.join(ruta_script, "atp_matches_2026_indetectable.csv")
 ANIO = 2026
 
-print(f"🥷 INICIANDO MODO INDETECTABLE ({ANIO})...")
+print(f"[NINJA] INICIANDO MODO INDETECTABLE ({ANIO})...")
 
 # 1. PREPARAR DATOS Y LISTAR TORNEOS COMPLETADOS
 try:
     df = pd.read_csv(ARCHIVO_ENTRADA)
     urls = []
     names = []
-    print("🔗 Procesando enlaces...")
+    print("[LINK] Procesando enlaces...")
     for link in df['Link_Resultados']:
         parts = link.strip().split('/')
         try:
@@ -43,7 +46,7 @@ try:
         except:
             pass
 except Exception as e:
-    print(f"❌ Error leyendo CSV origen: {e}")
+    print(f"[FAIL] Error leyendo CSV origen: {e}")
     exit()
 
 # --- NUEVO: FILTRO DE TORNEOS YA DESCARGADOS ---
@@ -51,9 +54,9 @@ torneos_descargados = set()
 try:
     df_existente = pd.read_csv(ARCHIVO_SALIDA)
     torneos_descargados = set(df_existente['tourney_name'].unique())
-    print(f"✅ Se encontraron {len(torneos_descargados)} torneos ya descargados en la base de datos local.")
+    print(f"[OK] Se encontraron {len(torneos_descargados)} torneos ya descargados en la base de datos local.")
 except FileNotFoundError:
-    print("ℹ️ No se encontró historial previo de 2026. Se creará desde cero.")
+    print("ℹ No se encontró historial previo de 2026. Se creará desde cero.")
 
 # Filtrar listas
 urls_nuevas = []
@@ -63,25 +66,22 @@ for u, n in zip(urls, names):
         urls_nuevas.append(u)
         names_nuevos.append(n)
         
-print(f"⏭️ Torneos a descargar HOY: {len(urls_nuevas)} (Omitiendo {len(urls) - len(urls_nuevas)} ya guardados)")
+print(f"[SKIP] Torneos a descargar HOY: {len(urls_nuevas)} (Omitiendo {len(urls) - len(urls_nuevas)} ya guardados)")
 
 if not urls_nuevas:
-    print("🚀 ¡Todo está actualizado! No hay torneos nuevos para descargar.")
+    print("[START] ¡Todo está actualizado! No hay torneos nuevos para descargar.")
     exit()
 
 # 2. INICIAR NAVEGADOR INDETECTABLE
 # OJO: Esto abre una ventana de Chrome que NO dice "Chrome está siendo controlado..."
-options = uc.ChromeOptions()
-options.add_argument("--start-maximized")
-# options.add_argument("--headless") # NO uses headless con Cloudflare
 
-print("🚀 Lanzando Chrome parcheado (puede tardar unos segundos)...")
-driver = uc.Chrome(options=options, version_main=146)
+print("[START] Lanzando Chrome parcheado (puede tardar unos segundos)...")
+driver = create_chrome_driver()
 
 # 3. BUCLE DE TORNEOS
 for i, url in enumerate(urls_nuevas):
     torneo = names_nuevos[i]
-    print(f"\n🌍 [{i+1}/{len(urls_nuevas)}] {torneo}")
+    print(f"\n[GLOBE] [{i+1}/{len(urls_nuevas)}] {torneo}")
     print(f"   Link: {url}")
     
     torneo_matches_temp = []
@@ -96,7 +96,7 @@ for i, url in enumerate(urls_nuevas):
         
         # CHEQUEO DE BLOQUEO MANUAL
         if "just a moment" in driver.title.lower():
-            print("🛑 Cloudflare detectado. Tienes 10 segundos para hacer clic si es necesario...")
+            print("[STOP] Cloudflare detectado. Tienes 10 segundos para hacer clic si es necesario...")
             time.sleep(10)
 
         # SCROLL PARA CARGAR PARTIDOS
@@ -108,11 +108,11 @@ for i, url in enumerate(urls_nuevas):
         matches = soup.find_all('div', class_='match')
         
         if not matches:
-            print("   ⚠️ 0 partidos. Se asume que llegamos a torneos futuros.")
-            print("   🛑 ¡Deteniendo el scraper para ahorrar tiempo!")
+            print("   [WARN] 0 partidos. Se asume que llegamos a torneos futuros.")
+            print("   [STOP] ¡Deteniendo el scraper para ahorrar tiempo!")
             break  # Esto rompe el bucle y pasa directo a guardar
             
-        print(f"   ✅ ¡{len(matches)} PARTIDOS!")
+        print(f"   [OK] ¡{len(matches)} PARTIDOS!")
         
         count = 0
         for m in matches:
@@ -164,10 +164,10 @@ for i, url in enumerate(urls_nuevas):
             import os
             es_nuevo = not os.path.exists(ARCHIVO_SALIDA)
             df_new.to_csv(ARCHIVO_SALIDA, mode='a', header=es_nuevo, index=False)
-            print(f"   💾 Progreso guardado: {len(df_new)} partidos añadidos.")
+            print(f"   [SAVE] Progreso guardado: {len(df_new)} partidos añadidos.")
             
     except Exception as e:
-        print(f"   ❌ Error: {e}")
+        print(f"   [FAIL] Error: {e}")
 
 driver.quit()
-print("\n🎉 ¡PROCESO DE SCRAPING FINALIZADO!")
+print("\n[DONE] ¡PROCESO DE SCRAPING FINALIZADO!")

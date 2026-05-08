@@ -17,12 +17,12 @@ def ejecutar_pipeline():
     
     directorio_scraping = os.path.dirname(os.path.abspath(__file__))
 
-    print("🚀 INICIANDO ACTUALIZACIÓN GLOBAL...")
+    print("[START] INICIANDO ACTUALIZACIÓN GLOBAL...")
     inicio = time.time()
     
     for script in scripts:
         print(f"\n" + "="*40)
-        print(f"▶️ Ejecutando: {script}")
+        print(f"▶ Ejecutando: {script}")
         print("="*40)
         
         try:
@@ -30,13 +30,13 @@ def ejecutar_pipeline():
             resultado = subprocess.run([sys.executable, "-X", "utf8", script], check=True, capture_output=True, text=True,encoding='utf-8', cwd=directorio_scraping)
             print(resultado.stdout) # Imprime lo que dice el script
         except subprocess.CalledProcessError as e:
-            print(f"❌ Error crítico en {script}!")
+            print(f"[FAIL] Error crítico en {script}!")
             print(e.stderr)
             return False # Detiene todo si algo falla
             
     fin = time.time()
     minutos = (fin - inicio) / 60
-    print(f"\n✅ ¡PIPELINE COMPLETADO EN {minutos:.1f} MINUTOS!")
+    print(f"\n[OK] ¡PIPELINE COMPLETADO EN {minutos:.1f} MINUTOS!")
     return True
 
 # Esto permite probarlo desde la terminal

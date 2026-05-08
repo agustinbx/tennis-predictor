@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-print("🛠️ INICIANDO CORRECCIÓN DE SUPERFICIES Y RANKINGS...")
+print("[GEAR] INICIANDO CORRECCIÓN DE SUPERFICIES Y RANKINGS...")
 
 # --- ARCHIVOS DE ENTRADA ---
 # Tu archivo con los partidos de 2025 y 2026 (puede ser el raw o el master)
@@ -15,13 +15,13 @@ try:
     # 1. CARGAR DATOS
     df = pd.read_csv(ARCHIVO_PARTIDOS)
     df_rank = pd.read_csv(ARCHIVO_RANKING)
-    print(f"✅ Partidos cargados: {len(df)}")
-    print(f"✅ Ranking cargado: {len(df_rank)}")
+    print(f"[OK] Partidos cargados: {len(df)}")
+    print(f"[OK] Ranking cargado: {len(df_rank)}")
 
     # ---------------------------------------------------------
-    # PASO 1: ARREGLAR SUPERFICIES (CLAY, GRASS, HARD) 🏟️
+    # PASO 1: ARREGLAR SUPERFICIES (CLAY, GRASS, HARD) [STADIUM]
     # ---------------------------------------------------------
-    print("🌍 Corrigiendo superficies...")
+    print("[GLOBE] Corrigiendo superficies...")
 
     def detectar_superficie(nombre_torneo):
         nombre = str(nombre_torneo).lower()
@@ -51,12 +51,12 @@ try:
     
     # Reporte rápido
     conteo = df['surface'].value_counts()
-    print(f"   📊 Superficies detectadas: Clay={conteo.get('Clay',0)}, Grass={conteo.get('Grass',0)}, Hard={conteo.get('Hard',0)}")
+    print(f"   [STATS] Superficies detectadas: Clay={conteo.get('Clay',0)}, Grass={conteo.get('Grass',0)}, Hard={conteo.get('Hard',0)}")
 
     # ---------------------------------------------------------
-    # PASO 2: INYECTAR RANKING ACTUAL A 2026 🏆
+    # PASO 2: INYECTAR RANKING ACTUAL A 2026 [TOP]
     # ---------------------------------------------------------
-    print("💉 Inyectando Ranking Actual a los partidos de 2026...")
+    print("[INJECTION] Inyectando Ranking Actual a los partidos de 2026...")
 
     # Creamos un diccionario rápido: {'Carlos Alcaraz': 2, 'Jannik Sinner': 1}
     # Usamos 'player_slug' porque el scraper de ranking lo guardó así
@@ -83,7 +83,7 @@ try:
     df['loser_rank'] = df.apply(lambda row: get_current_rank(row['loser_name'], row.get('loser_rank', 0)), axis=1)
 
     # ---------------------------------------------------------
-    # PASO 3: LIMPIEZA FINAL Y GUARDADO 💾
+    # PASO 3: LIMPIEZA FINAL Y GUARDADO [SAVE]
     # ---------------------------------------------------------
     
     # Rellenamos columnas faltantes con ceros para que no falle la fusión final
@@ -95,12 +95,12 @@ try:
     df.to_csv(ARCHIVO_SALIDA, index=False)
     
     print("\n" + "="*50)
-    print("🎉 ¡CORRECCIÓN COMPLETADA!")
-    print(f"📂 Archivo listo: {ARCHIVO_SALIDA}")
+    print("[DONE] ¡CORRECCIÓN COMPLETADA!")
+    print(f"[DATA] Archivo listo: {ARCHIVO_SALIDA}")
     print("   -> Superficies corregidas.")
     print("   -> Ranking 2026 actualizado.")
     print("="*50)
 
 except Exception as e:
-    print(f"❌ Error: {e}")
+    print(f"[FAIL] Error: {e}")
     print("Asegúrate de tener los archivos 'atp_matches_2025_2026_raw.csv' y 'ranking_actual_2026.csv'")

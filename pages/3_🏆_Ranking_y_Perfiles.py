@@ -1,76 +1,79 @@
+"""
+Página de ranking y perfiles de jugadores.
+Muestra el ranking ATP y permite ver perfiles detallados.
+"""
 import streamlit as st
 import pandas as pd
-import joblib
 import sys
-import os
+from pathlib import Path
 
-# --- MAPA HACIA LA CARPETA SCRAPING ---
-# Subimos un nivel (a la carpeta principal) y luego bajamos a la carpeta 'scraping'
-ruta_scraping = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'scraping'))
+# Agregar src al path
+src_path = Path(__file__).parent.parent / "src"
+if str(src_path) not in sys.path:
+    sys.path.insert(0, str(src_path))
 
-if ruta_scraping not in sys.path:
-    sys.path.append(ruta_scraping)
+try:
+    from streamlit_app.utils import apply_style, load_perfiles, load_ranking
+except ImportError:
+    import os
+    import joblib
+    
+    SCRIPT_DIR = Path(__file__).parent
+    PROJECT_ROOT = SCRIPT_DIR.parent
+    SCRAPING_DIR = PROJECT_ROOT / "scraping"
+    
+    def apply_style():
+        st.markdown("""
+            <style>
+            #MainMenu {visibility: hidden;}
+            footer {visibility: hidden;}
+            </style>
+        """, unsafe_allow_html=True)
+    
+    def load_perfiles():
+        path = SCRAPING_DIR / "perfiles_jugadores.pkl"
+        if path.exists():
+            return joblib.load(path)
+        return None
+    
+    def load_ranking():
+        path = SCRAPING_DIR / "ranking_2026.csv"
+        if path.exists():
+            return pd.read_csv(path)
+        return None
 
 
 st.set_page_config(page_title="Ranking ATP", page_icon="🏆", layout="wide")
 
 st.title("🏆 Ranking ATP en Vivo & Perfiles")
 
-hide_st_style = """
-            <style>
-            #MainMenu {visibility: hidden;} /* Oculta los 3 puntitos de arriba a la derecha */
-            footer {visibility: hidden;} /* Oculta el "Made with Streamlit" de abajo */
-            </style>
-            """
-st.markdown(hide_st_style, unsafe_allow_html=True)
-
-# --- BOTÓN DE ACTUALIZACIÓN ---
-# Importamos el actualizador que acabamos de crear
-from actualizador_maestro import ejecutar_pipeline
-
-if st.button("🔄 Buscar Nuevos Partidos y Actualizar Ranking", type="primary"):
-    with st.spinner("Los robots están trabajando... Esto puede tardar unos minutos."):
-        exito = ejecutar_pipeline()
-        if exito:
-            st.success("¡Base de datos actualizada con éxito!")
-            st.rerun() # Recarga la página para mostrar los datos frescos
-        else:
-            st.error("Hubo un error en la actualización. Revisa la consola.")
-
-st.markdown("---")
+apply_style()
 
 # --- CARGAR DATOS ---
-ruta_scraping = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'scraping'))
-ruta_ranking = os.path.join(ruta_scraping, "ranking_2026.csv")
-ruta_perfiles = os.path.join(ruta_scraping, "perfiles_jugadores.pkl")
+df_ranking = load_ranking()
+perfiles = load_perfiles()
 
-try:
-    df_ranking = pd.read_csv(ruta_ranking)
-    perfiles = joblib.load(ruta_perfiles)
-except Exception as e:
-    st.warning(f"No se encontraron los datos en la carpeta scraping. ¿Ya corriste la actualización?")
-    st.error(f"Error técnico: {e}") # Esto nos dirá exactamente qué falta si vuelve a fallar
+if df_ranking is None or perfiles is None:
+    st.warning("No se encontraron los datos. ¿Ya corriste el pipeline ETL?")
+    st.info("Ejecuta: `python scripts/run_etl_pipeline.py`")
     st.stop()
 
-col1, col2 = st.columns([1, 1])
-
-# --- TRUCO MAGISTRAL: Nombres Completos ---
-# Extraemos el nombre real de la URL igual que en tu generador de perfiles
+# Función para extraer nombre real
 def extraer_nombre_real(url):
     try:
-        slug = str(url).split('/')[5] 
+        slug = str(url).split('/')[5]
         return slug.replace('-', ' ').title()
     except:
         return ""
 
-# Creamos la columna mágica antes de dividir la pantalla
 df_ranking['Nombre Completo'] = df_ranking['url_perfil'].apply(extraer_nombre_real)
+
+col1, col2 = st.columns([1, 1])
 
 # --- COLUMNA 1: TABLA DE RANKING ---
 with col1:
     st.subheader("Clasificación Mundial")
     
-    # Armamos la tabla bonita usando el Nombre Completo
     df_mostrar = df_ranking[['rank', 'Nombre Completo', 'points']].copy()
     df_mostrar.columns = ['Rank', 'Jugador', 'Puntos']
     st.dataframe(df_mostrar.set_index('Rank'), height=600, use_container_width=True)
@@ -79,15 +82,10 @@ with col1:
 with col2:
     st.subheader("🔍 Analizador de Perfil")
     
-    # 🧠 Pasamos la lista de Nombres Completos al buscador
-    lista_jugadores = df_ranking['Nombre Completo'].tolist()
-    
-    # Filtramos los vacíos por si acaso
-    lista_jugadores = [j for j in lista_jugadores if j != ""] 
+    lista_jugadores = [j for j in df_ranking['Nombre Completo'].tolist() if j != ""]
     
     jugador_seleccionado = st.selectbox("Buscar jugador:", lista_jugadores)
     
-    # Ahora sí, buscará "Jannik Sinner" en los perfiles
     if jugador_seleccionado in perfiles:
         p = perfiles[jugador_seleccionado]
         
