@@ -6,14 +6,14 @@ from sqlalchemy.orm import Session
 from typing import List
 import joblib
 import pandas as pd
-import os
 import logging
 
 # Imports del paquete
-from atp_predictor.core.paths import get_project_root, get_models_dir
+from atp_predictor.core.paths import get_models_dir
 from atp_predictor.api.database import get_db, engine, Base
 from atp_predictor.api.models import PlayerProfile, MatchStats
 from atp_predictor.api.schemas import MatchPredictionRequest
+from atp_predictor.config import get_settings
 
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
@@ -39,9 +39,12 @@ def load_models():
         'logistic': 'modelo_logistico_final.pkl',
         'scaler': 'scaler_final.pkl',
         'h2h_tracker': 'h2h_tracker.pkl',
+        'h2h_weighted_tracker': 'h2h_weighted_tracker.pkl',
         'elo_tracker': 'elo_tracker.pkl',
+        'elo_surface_tracker': 'elo_surface_tracker.pkl',
         'clutch_tracker': 'clutch_tracker.pkl',
         'surface_stats': 'stats_superficie_v2.pkl',
+        'surface_momentum_tracker': 'surface_momentum_tracker.pkl',
     }
     
     for key, filename in required_files.items():
@@ -181,7 +184,12 @@ def predict_match(req: MatchPredictionRequest, db: Session = Depends(get_db)):
     # Obtener valores de trackers
     elo1 = MODELS['elo_tracker'].get(req.jugador_1, 1500)
     elo2 = MODELS['elo_tracker'].get(req.jugador_2, 1500)
-    
+
+    # ELO específico de la superficie del partido (ver core/features.py::SurfaceEloTracker)
+    elo_surface_por_superficie = MODELS['elo_surface_tracker'].get(req.superficie, {})
+    elo_surf1 = elo_surface_por_superficie.get(req.jugador_1, 1500)
+    elo_surf2 = elo_surface_por_superficie.get(req.jugador_2, 1500)
+
     c1 = MODELS['clutch_tracker'].get(req.jugador_1, 0.5)
     c2 = MODELS['clutch_tracker'].get(req.jugador_2, 0.5)
     
@@ -215,7 +223,24 @@ def predict_match(req: MatchPredictionRequest, db: Session = Depends(get_db)):
         h2h_2_wins = record[0]
     
     diff_h2h = h2h_1_wins - h2h_2_wins
-    
+
+    # H2H ponderado por recencia (ver core/features.py::WeightedH2HTracker)
+    record_weighted = MODELS['h2h_weighted_tracker'].get(key, [0.0, 0.0])
+
+    if req.jugador_1 == p1_sort:
+        h2h_1_reciente = record_weighted[0]
+        h2h_2_reciente = record_weighted[1]
+    else:
+        h2h_1_reciente = record_weighted[1]
+        h2h_2_reciente = record_weighted[0]
+
+    diff_h2h_reciente = h2h_1_reciente - h2h_2_reciente
+
+    # Momentum reciente específico de esta superficie (ver
+    # core/features.py::SurfaceMomentumTracker)
+    momentum_surf1 = MODELS['surface_momentum_tracker'].get((req.jugador_1, req.superficie), 0.5)
+    momentum_surf2 = MODELS['surface_momentum_tracker'].get((req.jugador_2, req.superficie), 0.5)
+
     # Preparar datos para predicción
     input_data = pd.DataFrame([{
         'diff_elo': elo1 - elo2,
@@ -228,7 +253,11 @@ def predict_match(req: MatchPredictionRequest, db: Session = Depends(get_db)):
         'diff_fatigue': req.fatiga_1 - req.fatiga_2,
         'diff_momentum': m1 - m2,
         'diff_h2h': diff_h2h,
-        'diff_home': diff_home
+        'diff_home': diff_home,
+        'diff_elo_surface': elo_surf1 - elo_surf2,
+        'diff_descanso': req.descanso_1 - req.descanso_2,
+        'diff_h2h_reciente': diff_h2h_reciente,
+        'diff_momentum_superficie': momentum_surf1 - momentum_surf2
     }])
     
     try:

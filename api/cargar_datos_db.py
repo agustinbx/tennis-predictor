@@ -6,7 +6,8 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import joblib
 from api.database import SessionLocal, engine, Base
-from api.models_db import PlayerProfile, MatchStats
+from atp_predictor.api.models import PlayerProfile, MatchStats
+from atp_predictor.core.paths import get_models_dir, get_scraping_dir
 
 # 1. Crear las tablas en la BD
 print("[CONFIG] Creando tablas en la base de datos...")
@@ -18,7 +19,7 @@ def load_data():
     # 2. Cargar perfiles
     try:
         print("[UPLOAD] Cargando perfiles_jugadores.pkl...")
-        perfiles = joblib.load("scraping/perfiles_jugadores.pkl")
+        perfiles = joblib.load(get_scraping_dir() / "perfiles_jugadores.pkl")
         
         # Limpiamos tabla antes de insertar (para evitar duplicados al correr varias veces)
         db.query(PlayerProfile).delete()
@@ -46,11 +47,11 @@ def load_data():
 
     except FileNotFoundError:
         print("[FAIL] Archivo scraping/perfiles_jugadores.pkl no encontrado.")
-        
+
     # 3. Cargar estadísticas de superficie
     try:
         print("[UPLOAD] Cargando stats_superficie_v2.pkl...")
-        stats = joblib.load("prediccion/stats_superficie_v2.pkl")
+        stats = joblib.load(get_models_dir() / "stats_superficie_v2.pkl")
         
         db.query(MatchStats).delete()
         
@@ -66,7 +67,7 @@ def load_data():
             
         print(f"[OK] Se insertaron {count} estadísticas de superficie.")
     except FileNotFoundError:
-        print("[FAIL] Archivo prediccion/stats_superficie_v2.pkl no encontrado.")
+        print("[FAIL] Archivo models/stats_superficie_v2.pkl no encontrado.")
 
     # Guardar cambios
     db.commit()
