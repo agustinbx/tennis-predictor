@@ -63,9 +63,12 @@ scraping/ranking_2026.csv
 scraping/ranking_actual_2026.csv
 scraping/estadisticas_jugadores_avanzadas.csv
 
-# Dataset histórico externo (Jeff Sackmann) y dataset final procesado
-data/external/*.csv
+# Dataset final procesado (se regenera con fusionar_historico_final.py)
 data/processed/*.csv
+
+# NOTA: data/external/historial_tenis_COMPLETO.csv SÍ se versiona a propósito.
+# No lo genera ningún script — es el dataset base externo (Jeff Sackmann), y
+# sin él el pipeline entero no tiene desde dónde arrancar (CI incluido).
 
 # Outputs de comparación de modelos
 importancia_real.csv

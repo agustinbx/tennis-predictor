@@ -75,17 +75,19 @@ jobs:
           import os
           from pathlib import Path
 
-          # Verificar que existen los archivos necesarios
+          # Único archivo que de verdad hace falta: el histórico externo.
+          # Los CSVs de scraping en vivo (ranking_2026.csv, etc.) son
+          # opcionales — sin Selenium en CI, el pipeline sigue solo con
+          # el histórico (ver scraping/fusionar_historico_final.py).
           required = [
-              'scraping/historial_tenis_COMPLETO.csv',
-              'scraping/ranking_2026.csv',
+              'data/external/historial_tenis_COMPLETO.csv',
           ]
 
           missing = [f for f in required if not Path(f).exists()]
 
           if missing:
-              print(f'⚠️ Archivos faltantes: {missing}')
-              print('Saltando validación de datos...')
+              print(f'❌ Archivos faltantes: {missing}')
+              exit(1)
           else:
               print('✅ Datos de entrada validados')
           "

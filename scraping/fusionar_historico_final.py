@@ -36,37 +36,42 @@ if not ARCHIVO_HISTORICO.exists():
     sys.exit(1)
 
 if ARCHIVO_NUEVO is None:
-    print(f"[FAIL] No encuentro archivos de partidos nuevos en {scraping_dir}")
-    sys.exit(1)
+    # Sin scrape 2026 disponible (p.ej. un runner de CI, que no corre Selenium):
+    # seguimos solo con el histórico en vez de abortar todo el pipeline. El
+    # resultado queda un poco desactualizado, pero es un dataset válido.
+    print(f"[WARN] No encuentro archivos de partidos nuevos en {scraping_dir} — sigo solo con el histórico.")
 
 try:
     df_hist = pd.read_csv(ARCHIVO_HISTORICO, low_memory=False)
-    df_new = pd.read_csv(ARCHIVO_NUEVO, low_memory=False)
-
     print(f"[DATA] Historico: {len(df_hist)} partidos | Columnas: {len(df_hist.columns)}")
-    print(f"[DATA] Nuevo:     {len(df_new)} partidos | Columnas: {len(df_new.columns)}")
-    print(f"[DATA] Usando archivo nuevo: {ARCHIVO_NUEVO.name}")
 
-    # 2. NORMALIZAR COLUMNAS
-    columnas_hist = df_hist.columns.tolist()
+    if ARCHIVO_NUEVO is not None:
+        df_new = pd.read_csv(ARCHIVO_NUEVO, low_memory=False)
+        print(f"[DATA] Nuevo:     {len(df_new)} partidos | Columnas: {len(df_new.columns)}")
+        print(f"[DATA] Usando archivo nuevo: {ARCHIVO_NUEVO.name}")
 
-    # Mapeo de columnas con nombres distintos
-    mapeo = {
-        'winner': 'winner_name',
-        'loser': 'loser_name',
-    }
-    df_new.rename(columns=mapeo, inplace=True)
+        # 2. NORMALIZAR COLUMNAS
+        columnas_hist = df_hist.columns.tolist()
 
-    # Alinear columnas del nuevo con el historico
-    df_new_aligned = pd.DataFrame(columns=columnas_hist)
-    for col in df_new.columns:
-        if col in columnas_hist:
-            df_new_aligned[col] = df_new[col].values
-        else:
-            print(f"   [WARN] Columna '{col}' del nuevo archivo se ignorara (no existe en historico).")
+        # Mapeo de columnas con nombres distintos
+        mapeo = {
+            'winner': 'winner_name',
+            'loser': 'loser_name',
+        }
+        df_new.rename(columns=mapeo, inplace=True)
 
-    # Rellenar datos faltantes
-    df_new_aligned.fillna(0, inplace=True)
+        # Alinear columnas del nuevo con el historico
+        df_new_aligned = pd.DataFrame(columns=columnas_hist)
+        for col in df_new.columns:
+            if col in columnas_hist:
+                df_new_aligned[col] = df_new[col].values
+            else:
+                print(f"   [WARN] Columna '{col}' del nuevo archivo se ignorara (no existe en historico).")
+
+        # Rellenar datos faltantes
+        df_new_aligned.fillna(0, inplace=True)
+    else:
+        df_new_aligned = df_hist.iloc[0:0]  # DataFrame vacío, mismas columnas
 
     # 3. UNIR (CONCATENAR)
     print("[REFRESH] Uniendo archivos...")
@@ -108,7 +113,7 @@ try:
     print("\n" + "=" * 50)
     print(f"[DONE] FUSION EXITOSA!")
     print(f"[STATS] Total partidos: {len(df_total)}")
-    print(f"   (Historico {len(df_hist)} + Nuevo {len(df_new)})")
+    print(f"   (Historico {len(df_hist)} + Nuevo {len(df_new_aligned)})")
     print(f"[SAVE] Guardado en: {ARCHIVO_SALIDA}")
     print("=" * 50)
 
@@ -116,3 +121,4 @@ except Exception as e:
     print(f"[FAIL] Error durante la fusion: {e}")
     import traceback
     traceback.print_exc()
+    sys.exit(1)

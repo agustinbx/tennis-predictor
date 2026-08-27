@@ -15,7 +15,14 @@ ARCHIVO_PARTIDOS = "atp_matches_2026_full.csv"
 # Tu archivo con el ranking actual que scrapeamos antes
 ARCHIVO_RANKING = "ranking_2026.csv"
 # Archivo de salida limpio
-ARCHIVO_SALIDA = "atp_matches_2026_corregido.csv" 
+ARCHIVO_SALIDA = "atp_matches_2026_corregido.csv"
+
+if not Path(ARCHIVO_PARTIDOS).exists() or not Path(ARCHIVO_RANKING).exists():
+    # Sin scrape 2026 disponible (p.ej. un runner de CI, que no corre
+    # Selenium): no es un error, simplemente no hay nada nuevo que corregir.
+    # fusionar_historico_final.py sigue funcionando solo con el histórico.
+    print(f"[SKIP] No encuentro '{ARCHIVO_PARTIDOS}' y/o '{ARCHIVO_RANKING}' — nada que corregir, sigo sin fallar.")
+    sys.exit(0)
 
 try:
     # 1. CARGAR DATOS
@@ -90,4 +97,4 @@ try:
 
 except Exception as e:
     print(f"[FAIL] Error: {e}")
-    print("Asegúrate de tener los archivos 'atp_matches_2025_2026_raw.csv' y 'ranking_actual_2026.csv'")
+    sys.exit(1)
