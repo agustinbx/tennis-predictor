@@ -10,7 +10,6 @@ def ejecutar_pipeline():
         "scraper_2026_final.py",
         "enriquecer_2026.py",
         "corregir_superficie_ranking.py",
-        "juntar_scrapings.py",
         "fusionar_historico_final.py",
         "generar_perfiles.py" # ¡No olvides generar el .pkl al final!
     ]

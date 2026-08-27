@@ -13,7 +13,7 @@ import subprocess
 import logging
 from pathlib import Path
 from datetime import datetime
-from atp_predictor.core.paths import get_project_root, get_analisis_dir, get_scraping_dir, get_models_dir
+from atp_predictor.core.paths import get_project_root, get_scraping_dir, get_models_dir
 
 # Agregar src al path para imports
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
@@ -80,7 +80,7 @@ def main():
     steps = [
         (get_scraping_dir(), "corregir_superficie_ranking.py", "Corrección de superficie y ranking"),
         (get_scraping_dir(), "fusionar_historico_final.py", "Fusión de datos históricos"),
-        (get_analisis_dir(), "acomodar_ds.py", "Estandarización de datos"),
+        (Path(__file__).parent, "acomodar_ds.py", "Estandarización de datos"),
         (get_models_dir(), "predict_xgboost.py", "Entrenamiento XGBoost"),
         (get_scraping_dir(), "generar_perfiles.py", "Generación de perfiles"),
         (get_project_root() / "api", "cargar_datos_db.py", "Carga a base de datos"),

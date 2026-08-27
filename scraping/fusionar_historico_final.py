@@ -13,15 +13,15 @@ if str(src_path) not in sys.path:
     sys.path.insert(0, str(src_path))
 
 import pandas as pd
-from atp_predictor.core.paths import get_scraping_dir, get_processed_data_dir
+from atp_predictor.core.paths import get_scraping_dir, get_processed_data_dir, get_external_data_dir
 
 # --- CONFIGURACION ---
 scraping_dir = get_scraping_dir()
-ARCHIVO_HISTORICO = scraping_dir / "historial_tenis_COMPLETO.csv"
+ARCHIVO_HISTORICO = get_external_data_dir() / "historial_tenis_COMPLETO.csv"
 
-# Buscar el archivo de partidos nuevos (prioridad: corregido > indetectable > unidos > full)
+# Buscar el archivo de partidos nuevos (prioridad: corregido > indetectable > full)
 ARCHIVO_NUEVO = None
-for candidate in ["atp_matches_2026_corregido.csv", "atp_matches_2025_2026_unidos.csv", "atp_matches_2026_indetectable.csv", "atp_matches_2026_full.csv"]:
+for candidate in ["atp_matches_2026_corregido.csv", "atp_matches_2026_indetectable.csv", "atp_matches_2026_full.csv"]:
     if (scraping_dir / candidate).exists():
         ARCHIVO_NUEVO = scraping_dir / candidate
         break

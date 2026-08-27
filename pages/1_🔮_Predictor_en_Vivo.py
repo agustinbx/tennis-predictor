@@ -83,11 +83,14 @@ except ImportError:
             pass
         return 0.5
     
-    def predict_match(j1, j2, superficie, pais, modelo, f1, f2):
+    def predict_match(jugador_1, jugador_2, superficie, pais_torneo, modelo,
+                       fatiga_1, fatiga_2, descanso_1=14, descanso_2=14):
         try:
             response = requests.post(f"{API_URL}/predict", json={
-                "jugador_1": j1, "jugador_2": j2, "superficie": superficie,
-                "pais_torneo": pais, "modelo": modelo, "fatiga_1": f1, "fatiga_2": f2
+                "jugador_1": jugador_1, "jugador_2": jugador_2, "superficie": superficie,
+                "pais_torneo": pais_torneo, "modelo": modelo,
+                "fatiga_1": fatiga_1, "fatiga_2": fatiga_2,
+                "descanso_1": descanso_1, "descanso_2": descanso_2
             }, timeout=10)
             if response.status_code == 200:
                 return response.json()
@@ -243,6 +246,7 @@ with col1:
             mostrar_historial_detallado(historial_j1)
         
         fat1 = st.number_input("Fatiga Acumulada (Sets)", 0, 30, 0, key=f"f1_{nombre1}")
+        desc1 = st.number_input("Días de Descanso (último partido)", 0, 60, 14, key=f"d1_{nombre1}")
 
 # ================= JUGADOR 2 =================
 with col2:
@@ -273,6 +277,7 @@ with col2:
             mostrar_historial_detallado(historial_j2)
         
         fat2 = st.number_input("Fatiga Acumulada (Sets)", 0, 30, 0, key=f"f2_{nombre2}")
+        desc2 = st.number_input("Días de Descanso (último partido)", 0, 60, 14, key=f"d2_{nombre2}")
 
 st.divider()
 
@@ -307,7 +312,9 @@ if st.button(boton_texto, type="primary", use_container_width=True):
         pais_torneo=pais_torneo,
         modelo=modelo,
         fatiga_1=fat1,
-        fatiga_2=fat2
+        fatiga_2=fat2,
+        descanso_1=desc1,
+        descanso_2=desc2
     )
     
     if resultado:

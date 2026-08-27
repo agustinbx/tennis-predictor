@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "atp-api",
+      "runtimeExecutable": "C:\\Users\\usuario\\Proyecto DS\\venv\\Scripts\\python.exe",
+      "runtimeArgs": ["-m", "uvicorn", "api.main:app", "--reload", "--port", "8002"],
+      "port": 8002
+    },
+    {
+      "name": "atp-streamlit",
+      "runtimeExecutable": "C:\\Users\\usuario\\Proyecto DS\\venv\\Scripts\\python.exe",
+      "runtimeArgs": ["-m", "streamlit", "run", "0_🏠_Inicio.py", "--server.port", "8501", "--server.headless", "true"],
+      "port": 8501
+    }
+  ]
+}

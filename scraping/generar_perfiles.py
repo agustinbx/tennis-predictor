@@ -26,7 +26,6 @@ def find_csv_file(filename: str) -> Path:
         get_scraping_dir() / filename,
         get_models_dir() / filename,
         project_root / "scraping" / filename,
-        project_root / "prediccion" / filename,
     ]
     
     for path in possible_paths:

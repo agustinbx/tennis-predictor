@@ -5,7 +5,7 @@ on:
     branches: [main, develop]
     paths:
       - "scraping/**/*.csv"
-      - "prediccion/**/*.py"
+      - "models/**/*.py"
       - "src/atp_predictor/**/*.py"
   pull_request:
     branches: [main]
@@ -100,7 +100,7 @@ jobs:
           import joblib
           from pathlib import Path
 
-          models_dir = Path('prediccion')
+          models_dir = Path('models')
           required_models = [
               'modelo_xgboost_final.pkl',
               'scaler_final.pkl',
@@ -119,19 +119,7 @@ jobs:
           else:
               print('⚠️ Algunos modelos no fueron generados')
           "
-
-      - name: Commit y Push de cambios
-        run: |
-          git config --global user.name "GitHub Actions Bot"
-          git config --global user.email "actions@github.com"
-
-          # Agregar archivos generados
-          git add prediccion/*.pkl
-          git add scraping/*.pkl
-          git add atp_tennis.db
-
-          # Commit si hay cambios
-          git diff --quiet && git diff --staged --quiet || \
-            git commit -m "🤖 Auto-Update: ETL pipeline completado [skip ci]"
-
-          git push || echo "No changes to push"
+        # Nota: este job ya no commitea los modelos/DB generados de vuelta al
+        # repo. Esos artefactos se sacaron deliberadamente del tracking de
+        # git (son regenerables, ver .gitignore) — auto-commitearlos de nuevo
+        # aquí reintroduciría el mismo bloat que se resolvió a propósito.
