@@ -42,19 +42,21 @@ def get_processed_data_dir() -> Path:
     return path
 
 
+def get_external_data_dir() -> Path:
+    """Obtiene el directorio de datos externos de terceros (data/external/)."""
+    path = get_project_root() / "data" / "external"
+    path.mkdir(parents=True, exist_ok=True)
+    return path
+
+
 def get_models_dir() -> Path:
-    """Obtiene el directorio de modelos (prediccion/)."""
-    return get_project_root() / "prediccion"
+    """Obtiene el directorio de modelos (models/)."""
+    return get_project_root() / "models"
 
 
 def get_scraping_dir() -> Path:
     """Obtiene el directorio de scraping."""
     return get_project_root() / "scraping"
-
-
-def get_analisis_dir() -> Path:
-    """Obtiene el directorio de análisis."""
-    return get_project_root() / "analisis"
 
 
 def get_api_dir() -> Path:

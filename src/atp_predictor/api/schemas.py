@@ -27,6 +27,8 @@ class MatchPredictionRequest(BaseModel):
     modelo: str = "XGBoost"
     fatiga_1: int = 0
     fatiga_2: int = 0
+    descanso_1: int = 14
+    descanso_2: int = 14
 
 
 class MatchPredictionResponse(BaseModel):

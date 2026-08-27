@@ -15,6 +15,7 @@ import requests
 from typing import Optional, Dict, Any, List
 
 from atp_predictor.core.paths import get_project_root, get_scraping_dir, get_models_dir
+
 from atp_predictor.config import get_settings
 
 
@@ -87,7 +88,7 @@ def load_comparison_results() -> Optional[pd.DataFrame]:
     """
     possible_paths = [
         get_project_root() / "resultados_comparacion.csv",
-        get_project_root() / "prediccion" / "resultados_comparacion.csv",
+        get_models_dir() / "resultados_comparacion.csv",
     ]
     
     for path in possible_paths:
@@ -105,7 +106,7 @@ def load_feature_importance() -> Optional[pd.DataFrame]:
     """
     possible_paths = [
         get_project_root() / "importancia_real.csv",
-        get_project_root() / "prediccion" / "importancia_real.csv",
+        get_models_dir() / "importancia_real.csv",
     ]
     
     for path in possible_paths:
@@ -212,11 +213,13 @@ def predict_match(
     pais_torneo: str = "NEUTRAL",
     modelo: str = "XGBoost",
     fatiga_1: int = 0,
-    fatiga_2: int = 0
+    fatiga_2: int = 0,
+    descanso_1: int = 14,
+    descanso_2: int = 14
 ) -> Optional[Dict[str, Any]]:
     """
     Realiza una predicción de partido.
-    
+
     Args:
         jugador_1: Nombre del jugador 1
         jugador_2: Nombre del jugador 2
@@ -225,7 +228,9 @@ def predict_match(
         modelo: Modelo a usar ('XGBoost' o 'Logistic Regression')
         fatiga_1: Fatiga acumulada del jugador 1
         fatiga_2: Fatiga acumulada del jugador 2
-    
+        descanso_1: Días de descanso desde el último partido del jugador 1
+        descanso_2: Días de descanso desde el último partido del jugador 2
+
     Returns:
         Diccionario con la predicción o None si hay error
     """
@@ -236,7 +241,9 @@ def predict_match(
         "pais_torneo": pais_torneo,
         "modelo": modelo,
         "fatiga_1": fatiga_1,
-        "fatiga_2": fatiga_2
+        "fatiga_2": fatiga_2,
+        "descanso_1": descanso_1,
+        "descanso_2": descanso_2
     }
     
     try:
