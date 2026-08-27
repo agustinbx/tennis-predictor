@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -144,7 +145,11 @@ for i, url in enumerate(urls_nuevas):
                 torneo_matches_temp.append({
                     'tourney_id': f"{ANIO}-{torneo}-{i}",
                     'tourney_name': torneo,
-                    'surface': 'Hard',
+                    # La superficie real se determina en enriquecer_2026.py
+                    # (única fuente de verdad, ver surface_utils.py). NaN acá
+                    # y no 'Hard': mantiene la columna (y su posición, para no
+                    # romper el CSV incremental) sin inventar un dato falso.
+                    'surface': np.nan,
                     'winner_name': winner,
                     'loser_name': loser,
                     'score': " ".join(score_parts),
@@ -157,9 +162,12 @@ for i, url in enumerate(urls_nuevas):
         # GUARDADO PARCIAL INMEDIATO DESPUÉS DE CADA TORNEO EXITOSO
         if torneo_matches_temp:
             df_new = pd.DataFrame(torneo_matches_temp)
-            # Rellenar columnas extra para compatibilidad
+            # Columnas que este scraper no puede completar (se enriquecen
+            # después en enriquecer_2026.py a partir de perfiles_jugadores.pkl,
+            # o quedan sin dato). NaN y no 0: un 0 se leería como un valor
+            # real (rank_points=0, age=0, etc.) en vez de "desconocido".
             cols = ['draw_size','tourney_level','tourney_date','match_num','winner_id','winner_seed','winner_entry','winner_hand','winner_ht','winner_ioc','winner_age','loser_id','loser_seed','loser_entry','loser_hand','loser_ht','loser_ioc','loser_age','best_of','winner_rank','winner_rank_points','loser_rank','loser_rank_points']
-            for c in cols: df_new[c] = 0
+            for c in cols: df_new[c] = np.nan
             
             import os
             es_nuevo = not os.path.exists(ARCHIVO_SALIDA)

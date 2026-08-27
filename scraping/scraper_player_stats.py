@@ -13,9 +13,10 @@ import re
 print("[DETECTIVE] INICIANDO ROBO DE ESTADISTICAS (MODO LECTOR DE TEXTO VISIBLE)...")
 
 try:
-    df_rank = pd.read_csv("ranking_actual_2026.csv")
+    # Debe coincidir con ARCHIVO_SALIDA de scraper_ranking.py
+    df_rank = pd.read_csv("ranking_2026.csv")
 except FileNotFoundError:
-    print("[FAIL] Falta el archivo 'ranking_actual_2026.csv'")
+    print("[FAIL] Falta el archivo 'ranking_2026.csv' (generado por scraper_ranking.py)")
     exit()
 
 driver = create_chrome_driver()

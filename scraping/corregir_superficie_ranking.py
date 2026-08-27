@@ -1,7 +1,13 @@
+import sys
+from pathlib import Path
+
 import pandas as pd
 import numpy as np
 
-print("[GEAR] INICIANDO CORRECCIÓN DE SUPERFICIES Y RANKINGS...")
+sys.path.insert(0, str(Path(__file__).parent))
+from surface_utils import detectar_superficie
+
+print("[GEAR] INICIANDO CORRECCIÓN DE RANKINGS...")
 
 # --- ARCHIVOS DE ENTRADA ---
 # Tu archivo con los partidos de 2025 y 2026 (puede ser el raw o el master)
@@ -19,39 +25,20 @@ try:
     print(f"[OK] Ranking cargado: {len(df_rank)}")
 
     # ---------------------------------------------------------
-    # PASO 1: ARREGLAR SUPERFICIES (CLAY, GRASS, HARD) [STADIUM]
+    # PASO 1: SUPERFICIE (solo si falta) [STADIUM]
     # ---------------------------------------------------------
-    print("[GLOBE] Corrigiendo superficies...")
+    # La superficie ya la determina enriquecer_2026.py (única fuente de
+    # verdad, ver surface_utils.py). Acá solo completamos si por algún
+    # motivo faltara, en vez de recalcularla de nuevo con otra lógica.
+    if 'surface' not in df.columns:
+        df['surface'] = np.nan
+    faltantes = df['surface'].isna()
+    if faltantes.any():
+        print(f"[GLOBE] Completando superficie faltante en {faltantes.sum()} partidos...")
+        df.loc[faltantes, 'surface'] = df.loc[faltantes, 'tourney_name'].apply(detectar_superficie)
 
-    def detectar_superficie(nombre_torneo):
-        nombre = str(nombre_torneo).lower()
-        
-        # --- PALABRAS CLAVE PARA ARCILLA (CLAY) ---
-        clay_keywords = [
-            'roland garros', 'madrid', 'rome', 'roma', 'monte carlo', 'barcelona', 
-            'rio', 'buenos aires', 'cordoba', 'santiago', 'estoril', 'munich', 
-            'geneva', 'lyon', 'hamburg', 'bastad', 'gstaad', 'umag', 'kitzbuhel'
-        ]
-        # --- PALABRAS CLAVE PARA PASTO (GRASS) ---
-        grass_keywords = [
-            'wimbledon', 'queen', 'halle', 'mallorca', 'eastbourne', 
-            'stuttgart', 'hertogenbosch', 'newport'
-        ]
-        # (Todo lo demás será Hard por descarte: AO, US Open, Masters grandes, etc.)
-
-        if any(k in nombre for k in clay_keywords):
-            return 'Clay'
-        elif any(k in nombre for k in grass_keywords):
-            return 'Grass'
-        else:
-            return 'Hard' # Por defecto (Cementos, Indoor, Carpet)
-
-    # Aplicamos la función fila por fila
-    df['surface'] = df['tourney_name'].apply(detectar_superficie)
-    
-    # Reporte rápido
     conteo = df['surface'].value_counts()
-    print(f"   [STATS] Superficies detectadas: Clay={conteo.get('Clay',0)}, Grass={conteo.get('Grass',0)}, Hard={conteo.get('Hard',0)}")
+    print(f"   [STATS] Superficies: Clay={conteo.get('Clay',0)}, Grass={conteo.get('Grass',0)}, Hard={conteo.get('Hard',0)}")
 
     # ---------------------------------------------------------
     # PASO 2: INYECTAR RANKING ACTUAL A 2026 [TOP]
