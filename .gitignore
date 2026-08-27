@@ -43,71 +43,33 @@ coverage.xml
 .mypy_cache/
 
 # ===========================================
-# ARCHIVOS DE DATOS INTERMEDIOS
-# (Los que se generan durante el pipeline)
+# ARTEFACTOS GENERADOS POR EL PIPELINE
+# (Regenerables corriendo el scraping/ETL/training; no se versionan
+# porque crecen en cada corrida y hacen crecer el repo sin necesidad.
+# scraping/atp_torneos_2026_final.csv es la ÚNICA excepción real: es la
+# lista curada de torneos/URLs que alimenta al scraper, no un output.)
 # ===========================================
 
-# CSVs intermedios de scraping
-scraping/atp_matches.csv
-scraping/atp_matches_2025.csv
-scraping/atp_matches_2025_2026_unidos.csv
-scraping/atp_matches_2026_corregido.csv
-scraping/atp_matches_historico.csv
+# Modelos y trackers entrenados (models/predict_xgboost.py y matriz_confusion.png sí se versionan)
+models/*.pkl
+scraping/perfiles_jugadores.pkl
 
-# CSVs duplicados
-analisis/historialTenis.csv
-prediccion/historialTenis.csv
-prediccion/historial_tenis.csv
-prediccion/historial_tenis_COMPLETO.csv
-prediccion/ranking_2026.csv
-prediccion/ranking_actual_2026.csv
-prediccion/estadisticas_jugadores_avanzadas.csv
-prediccion/resultados_comparacion.csv
-scraping/historialTenis.csv
-scraping/historial_tenis.csv
-historialTenis.csv
+# Base de datos SQLite (se recrea con api/cargar_datos_db.py)
+*.db
+
+# CSVs intermedios/generados de scraping
+scraping/atp_matches*.csv
+scraping/ranking_2026.csv
+scraping/ranking_actual_2026.csv
+scraping/estadisticas_jugadores_avanzadas.csv
+
+# Dataset histórico externo (Jeff Sackmann) y dataset final procesado
+data/external/*.csv
+data/processed/*.csv
 
 # Outputs de comparación de modelos
 importancia_real.csv
 resultados_comparacion.csv
-prediccion/out_xgboost.txt
-prediccion/output.txt
-
-# PKLs antiguos/duplicados
-prediccion/elo_rating.pkl
-prediccion/elo_rating_surface.pkl
-prediccion/modelo_elo_xgboost.pkl
-prediccion/scaler_elo.pkl
-prediccion/stats_superficie.pkl
-prediccion/perfiles_jugadores.pkl
-
-# Directorios vacíos
-models/
-data/
-
-# ===========================================
-# ARCHIVOS A MANTENER (NO ignorar)
-# ===========================================
-
-# Datos principales (NO ignorar)
-# !scraping/historial_tenis_COMPLETO.csv
-# !scraping/atp_matches_2026_indetectable.csv
-# !scraping/ranking_2026.csv
-# !scraping/estadisticas_jugadores_avanzadas.csv
-# !scraping/atp_torneos_2026_final.csv
-
-# Modelos finales (NO ignorar)
-# !prediccion/modelo_xgboost_final.pkl
-# !prediccion/modelo_logistico_final.pkl
-# !prediccion/scaler_final.pkl
-# !prediccion/h2h_tracker.pkl
-# !prediccion/elo_tracker.pkl
-# !prediccion/clutch_tracker.pkl
-# !prediccion/stats_superficie_v2.pkl
-# !scraping/perfiles_jugadores.pkl
-
-# Base de datos (NO ignorar)
-# !atp_tennis.db
 
 # ===========================================
 # STREAMLIT

@@ -17,23 +17,32 @@ from typing import Dict, Tuple, Any, Optional, List
 import pandas as pd
 import numpy as np
 import xgboost as xgb
+import sklearn
 from sklearn.model_selection import (
-    train_test_split,
     cross_val_score,
     GridSearchCV,
-    StratifiedKFold
+    StratifiedGroupKFold
 )
 from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import accuracy_score, classification_report, roc_auc_score
+from sklearn.metrics import (
+    accuracy_score,
+    roc_auc_score,
+    log_loss,
+    brier_score_loss,
+)
 from sklearn.calibration import CalibratedClassifierCV
 import joblib
 
 from atp_predictor.core.paths import get_project_root, get_models_dir
 from atp_predictor.core.features import (
     EloTracker,
+    SurfaceEloTracker,
     H2HTracker,
+    WeightedH2HTracker,
     SurfaceStatsTracker,
     MomentumTracker,
+    SurfaceMomentumTracker,
+    RestTracker,
     get_clutch_score,
 )
 
@@ -46,23 +55,28 @@ logger = logging.getLogger(__name__)
 FEATURES = [
     'diff_elo', 'diff_rank', 'diff_points', 'diff_clutch',
     'diff_age', 'diff_ht', 'diff_skill', 'diff_fatigue',
-    'diff_momentum', 'diff_h2h', 'diff_home'
+    'diff_momentum', 'diff_h2h', 'diff_home', 'diff_elo_surface',
+    'diff_descanso', 'diff_h2h_reciente', 'diff_momentum_superficie',
 ]
 
 
 class MatchProcessor:
     """
     Procesador de partidos para feature engineering.
-    
+
     Implementa el patrón de "online learning" donde las estadísticas
     se actualizan partido a partido para evitar data leakage.
     """
-    
+
     def __init__(self):
         self.elo_tracker = EloTracker()
+        self.surface_elo_tracker = SurfaceEloTracker()
         self.h2h_tracker = H2HTracker()
+        self.h2h_weighted_tracker = WeightedH2HTracker()
         self.surface_tracker = SurfaceStatsTracker()
         self.momentum_tracker = MomentumTracker(window_size=5)
+        self.surface_momentum_tracker = SurfaceMomentumTracker(window_size=5)
+        self.rest_tracker = RestTracker()
         self.fatigue_tracker: Dict[Tuple[str, str], int] = {}  # (tournament_id, player) -> sets_played
         self.clutch_tracker: Dict[str, list] = {}  # player -> [bp_saved, bp_faced, sv_hold, sv_games]
     
@@ -86,19 +100,31 @@ class MatchProcessor:
         # Obtener valores actuales ANTES de actualizar
         elo_w = self.elo_tracker.get_rating(winner)
         elo_l = self.elo_tracker.get_rating(loser)
-        
+
+        elo_surf_w = self.surface_elo_tracker.get_rating(winner, surface)
+        elo_surf_l = self.surface_elo_tracker.get_rating(loser, surface)
+
         h2h_diff = self.h2h_tracker.get_h2h_diff(winner, loser)
-        
+        h2h_reciente_diff = self.h2h_weighted_tracker.get_weighted_diff(winner, loser)
+
         skill_w = self.surface_tracker.get_win_rate(winner, surface)
         skill_l = self.surface_tracker.get_win_rate(loser, surface)
-        
+
         momentum_w = self.momentum_tracker.get_momentum(winner)
         momentum_l = self.momentum_tracker.get_momentum(loser)
-        
-        # Fatiga
+
+        momentum_surf_w = self.surface_momentum_tracker.get_momentum(winner, surface)
+        momentum_surf_l = self.surface_momentum_tracker.get_momentum(loser, surface)
+
+        # Fatiga (dentro del mismo torneo)
         f_w = self.fatigue_tracker.get((tourney_id, winner), 0)
         f_l = self.fatigue_tracker.get((tourney_id, loser), 0)
-        
+
+        # Descanso (días desde el último partido, en cualquier torneo)
+        tourney_date = row.get('tourney_date')
+        rest_w = self.rest_tracker.get_rest_days(winner, tourney_date)
+        rest_l = self.rest_tracker.get_rest_days(loser, tourney_date)
+
         # Clutch
         clutch_w = self._get_clutch_score(winner)
         clutch_l = self._get_clutch_score(loser)
@@ -136,14 +162,23 @@ class MatchProcessor:
             'diff_fatigue': f_w - f_l,
             'diff_momentum': momentum_w - momentum_l,
             'diff_h2h': h2h_diff,
-            'diff_home': home_w - home_l
+            'diff_home': home_w - home_l,
+            'diff_elo_surface': elo_surf_w - elo_surf_l,
+            'diff_descanso': rest_w - rest_l,
+            'diff_h2h_reciente': h2h_reciente_diff,
+            'diff_momentum_superficie': momentum_surf_w - momentum_surf_l,
         }
-        
+
         # Ahora ACTUALIZAR los trackers para el siguiente partido
         self.elo_tracker.update(winner, loser)
+        self.surface_elo_tracker.update(winner, loser, surface)
         self.h2h_tracker.update(winner, loser)
+        self.h2h_weighted_tracker.update(winner, loser)
         self.surface_tracker.update(winner, loser, surface)
         self.momentum_tracker.update(winner, loser)
+        self.surface_momentum_tracker.update(winner, loser, surface)
+        self.rest_tracker.update(winner, tourney_date)
+        self.rest_tracker.update(loser, tourney_date)
         self._update_fatigue(tourney_id, winner, loser, score)
         self._update_clutch(winner, loser, row)
         
@@ -210,8 +245,11 @@ class MatchProcessor:
         """Retorna todos los trackers para exportar."""
         return {
             'elo': self.elo_tracker.to_dict(),
+            'elo_surface': self.surface_elo_tracker.to_dict(),
             'h2h': self.h2h_tracker.to_dict(),
+            'h2h_weighted': self.h2h_weighted_tracker.to_dict(),
             'surface': self.surface_tracker.to_win_rates_dict(),
+            'surface_momentum': self.surface_momentum_tracker.to_momentum_dict(),
             'clutch': {p: get_clutch_score(s) for p, s in self.clutch_tracker.items()},
         }
 
@@ -233,7 +271,7 @@ def load_training_data(csv_path: Optional[Path] = None) -> pd.DataFrame:
             get_processed_data_dir() / "historialTenis.csv",
             project_root / "historialTenis.csv",
             project_root / "scraping" / "historialTenis.csv",
-            project_root / "prediccion" / "historialTenis.csv",
+            project_root / "models" / "historialTenis.csv",
         ]
         
         for path in possible_paths:
@@ -261,41 +299,127 @@ def load_training_data(csv_path: Optional[Path] = None) -> pd.DataFrame:
     return df
 
 
-def prepare_features(df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame, MatchProcessor]:
+def prepare_features(df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.Series, pd.Series, MatchProcessor]:
     """
     Prepara las features para entrenamiento.
-    
+
     Args:
-        df: DataFrame con los datos de partidos
-    
+        df: DataFrame con los datos de partidos, ya ordenado cronológicamente
+            (ver load_training_data)
+
     Returns:
-        Tuple de (X, y, processor)
+        Tuple de (X, y, groups, processor). `groups` es el match_id de cada
+        fila (dos filas por partido: ganador y perdedor), asignado en el
+        mismo orden cronológico de `df`. Sirve para evitar que las dos
+        filas espejo de un mismo partido terminen separadas entre
+        train/test o entre folds de CV (data leakage).
     """
     logger.info("Generando features...")
-    
+
     processor = MatchProcessor()
     data_rows = []
-    
-    for idx, row in df.iterrows():
+
+    for match_id, (idx, row) in enumerate(df.iterrows()):
         # Procesar partido
         features = processor.process_match(row)
-        
+
         # Crear dos ejemplos: uno desde perspectiva del ganador, otro del perdedor
         features_winner = features.copy()
         features_winner['target'] = 1
+        features_winner['match_id'] = match_id
         data_rows.append(features_winner)
-        
+
         features_loser = {k: -v for k, v in features.items()}
         features_loser['target'] = 0
+        features_loser['match_id'] = match_id
         data_rows.append(features_loser)
-    
+
     df_train = pd.DataFrame(data_rows).dropna()
-    
+
     X = df_train[FEATURES]
     y = df_train['target']
-    
-    logger.info(f"Features preparadas: {len(X)} ejemplos")
-    return X, y, processor
+    groups = df_train['match_id']
+
+    logger.info(f"Features preparadas: {len(X)} ejemplos ({groups.nunique()} partidos)")
+    return X, y, groups, processor
+
+
+def temporal_train_test_split(
+    X: pd.DataFrame,
+    y: pd.Series,
+    groups: pd.Series,
+    test_size: float = 0.2,
+) -> Tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series, pd.Series, pd.Series]:
+    """
+    Divide X/y en train/test agrupando por partido y respetando el orden
+    cronológico (los partidos de test son siempre posteriores a los de train).
+
+    Evita dos problemas a la vez:
+    - Data leakage: las dos filas espejo (ganador/perdedor) de un mismo
+      partido siempre caen del mismo lado, nunca separadas.
+    - Split no realista: en producción el modelo solo predice partidos
+      futuros a partir de datos pasados, así que el test set debe ser
+      estrictamente posterior al train set, no una muestra aleatoria.
+
+    Args:
+        X: Features
+        y: Target
+        groups: match_id de cada fila (ver prepare_features)
+        test_size: Fracción de partidos (no de filas) a reservar para test
+
+    Returns:
+        Tuple de (X_train, X_test, y_train, y_test, groups_train, groups_test)
+    """
+    unique_matches = np.sort(groups.unique())
+    n_test = max(1, int(len(unique_matches) * test_size))
+    split_idx = len(unique_matches) - n_test
+
+    train_matches = set(unique_matches[:split_idx])
+    train_mask = groups.isin(train_matches)
+
+    X_train, X_test = X[train_mask], X[~train_mask]
+    y_train, y_test = y[train_mask], y[~train_mask]
+    groups_train, groups_test = groups[train_mask], groups[~train_mask]
+
+    logger.info(
+        f"Split temporal: {groups_train.nunique()} partidos en train, "
+        f"{groups_test.nunique()} partidos en test (test = partidos más recientes)"
+    )
+
+    return X_train, X_test, y_train, y_test, groups_train, groups_test
+
+
+def evaluate_baselines(X: pd.DataFrame, y: pd.Series) -> Dict[str, float]:
+    """
+    Calcula la accuracy de heurísticas simples ("baselines") sobre el mismo
+    conjunto de test que el modelo, para poder responder "¿cuánto aporta
+    el modelo por encima de una regla trivial?" en vez de reportar accuracy
+    en el vacío.
+
+    - favorito_ranking: predice que gana quien tiene mejor ranking ATP
+    - favorito_elo: predice que gana quien tiene mayor ELO acumulado
+    - clase_mayoritaria: predice siempre la clase más frecuente (referencia
+      de "no-info"; por construcción del dataset (una fila por ganador y
+      otra por perdedor) esto da ~50%)
+
+    Args:
+        X: Features SIN escalar (los baselines comparan contra 0, que solo
+            tiene sentido en la escala original de diff_rank/diff_elo)
+        y: Target
+
+    Returns:
+        Dict con la accuracy de cada baseline
+    """
+    pred_ranking = (X['diff_rank'] > 0).astype(int)
+    pred_elo = (X['diff_elo'] > 0).astype(int)
+    clase_mayoritaria = y.mode().iloc[0]
+    pred_mayoritaria = pd.Series(clase_mayoritaria, index=y.index)
+
+    return {
+        'favorito_ranking': accuracy_score(y, pred_ranking),
+        'favorito_elo': accuracy_score(y, pred_elo),
+        'clase_mayoritaria': accuracy_score(y, pred_mayoritaria),
+    }
 
 
 def train_model(
@@ -306,22 +430,23 @@ def train_model(
     n_estimators: int = 100,
     learning_rate: float = 0.05,
     max_depth: int = 5
-) -> Tuple[Any, StandardScaler, float]:
+) -> Tuple[Any, Dict[str, float]]:
     """
     Entrena el modelo XGBoost.
-    
+
     Args:
         X_train, y_train: Datos de entrenamiento escalados
         X_test, y_test: Datos de test escalados
         n_estimators: Número de árboles
         learning_rate: Tasa de aprendizaje
         max_depth: Profundidad máxima
-    
+
     Returns:
-        Tuple de (model, scaler, accuracy)
+        Tuple de (model, metrics). `metrics` incluye accuracy, roc_auc y
+        log_loss sobre el test set.
     """
     logger.info(f"Entrenando XGBoost con {len(X_train)} datos...")
-    
+
     model = xgb.XGBClassifier(
         n_estimators=n_estimators,
         learning_rate=learning_rate,
@@ -329,50 +454,62 @@ def train_model(
         eval_metric='logloss',
         random_state=42
     )
-    
+
     model.fit(X_train, y_train)
-    
+
     y_pred = model.predict(X_test)
-    accuracy = accuracy_score(y_test, y_pred)
-    
-    logger.info(f"Precisión en test: {accuracy * 100:.2f}%")
-    
-    return model, accuracy
+    y_proba = model.predict_proba(X_test)[:, 1]
+
+    metrics = {
+        'accuracy': accuracy_score(y_test, y_pred),
+        'roc_auc': roc_auc_score(y_test, y_proba),
+        'log_loss': log_loss(y_test, y_proba),
+    }
+
+    logger.info(f"Precisión en test: {metrics['accuracy'] * 100:.2f}%")
+    logger.info(f"ROC-AUC en test:   {metrics['roc_auc']:.4f}")
+    logger.info(f"Log-loss en test:  {metrics['log_loss']:.4f}")
+
+    return model, metrics
 
 
 def evaluate_with_cross_validation(
     model: Any,
     X: np.ndarray,
     y: np.ndarray,
+    groups: pd.Series,
     cv_folds: int = 5
 ) -> Dict[str, float]:
     """
     Evalúa el modelo usando Cross Validation.
-    
+
     Esto da una estimación más robusta de la precisión real,
     probando en diferentes subsets de datos.
-    
+
     Args:
         model: Modelo a evaluar (puede ser pipeline con scaler)
         X: Features completas (sin escalar)
         y: Target
+        groups: match_id de cada fila, para que las dos filas espejo de un
+            mismo partido nunca queden en folds distintos (evita leakage)
         cv_folds: Número de folds para cross validation
-    
+
     Returns:
         Dict con mean_accuracy, std_accuracy, y scores por fold
     """
     logger.info(f"\n{'='*60}")
     logger.info(f"[STATS] EVALUACION CON CROSS VALIDATION ({cv_folds} FOLDS)")
     logger.info(f"{'='*60}")
-    
+
     # Crear un scaler para usar dentro del CV
     scaler = StandardScaler()
-    
-    # Usar StratifiedKFold para mantener proporción de clases
-    cv = StratifiedKFold(n_splits=cv_folds, shuffle=True, random_state=42)
-    
+
+    # StratifiedGroupKFold: mantiene proporción de clases Y garantiza que
+    # ambas filas (ganador/perdedor) de un mismo partido caigan en el mismo fold
+    cv = StratifiedGroupKFold(n_splits=cv_folds, shuffle=True, random_state=42)
+
     # Cross validation scores
-    scores = cross_val_score(model, X, y, cv=cv, scoring='accuracy', n_jobs=-1)
+    scores = cross_val_score(model, X, y, groups=groups, cv=cv, scoring='accuracy', n_jobs=-1)
     
     mean_acc = scores.mean()
     std_acc = scores.std()
@@ -400,25 +537,28 @@ def tune_hyperparameters(
     y_train: np.ndarray,
     X_test: np.ndarray,
     y_test: np.ndarray,
+    groups_train: pd.Series,
     cv_folds: int = 3
 ) -> Tuple[Any, Dict[str, Any], float]:
     """
     Busca los mejores hiperparámetros usando Grid Search.
-    
+
     PRUEBA DIFERENTES COMBINACIONES:
     - n_estimators: [50, 100, 200]  → Cuántos árboles
     - max_depth: [3, 5, 7]         → Profundidad de cada árbol
     - learning_rate: [0.01, 0.05, 0.1]  → Qué tan rápido aprende
-    
+
     Con 3×3×3 = 27 combinaciones y CV=3: 81 entrenamientos
-    
+
     Args:
         X_train: Datos de entrenamiento escalados
         y_train: Target de entrenamiento
         X_test: Datos de test escalados
         y_test: Target de test
+        groups_train: match_id de cada fila de train, para que el CV interno
+            del grid search no separe las dos filas espejo de un partido
         cv_folds: Folds para validación cruzada
-    
+
     Returns:
         Tuple de (best_model, best_params, best_score)
     """
@@ -446,16 +586,18 @@ def tune_hyperparameters(
     logger.info(f"Probando {len(param_grid['n_estimators']) * len(param_grid['max_depth']) * len(param_grid['learning_rate']) * len(param_grid['subsample']) * len(param_grid['colsample_bytree'])} combinaciones...")
     logger.info(f"Con CV={cv_folds}, esto tomará tiempo. [WAIT]")
     
+    cv = StratifiedGroupKFold(n_splits=cv_folds, shuffle=True, random_state=42)
+
     grid_search = GridSearchCV(
         base_model,
         param_grid,
-        cv=cv_folds,
+        cv=cv,
         scoring='accuracy',
         n_jobs=-1,
         verbose=1
     )
-    
-    grid_search.fit(X_train, y_train)
+
+    grid_search.fit(X_train, y_train, groups=groups_train)
     
     best_model = grid_search.best_estimator_
     best_params = grid_search.best_params_
@@ -482,6 +624,7 @@ def calibrate_model(
     y_train: np.ndarray,
     X_test: np.ndarray,
     y_test: np.ndarray,
+    groups_train: pd.Series,
     method: str = 'isotonic'
 ) -> Tuple[Any, Dict[str, float]]:
     """
@@ -502,6 +645,8 @@ def calibrate_model(
         y_train: Target de entrenamiento
         X_test: Datos de test
         y_test: Target de test
+        groups_train: match_id de cada fila de train, para que el CV interno
+            de la calibración no separe las dos filas espejo de un partido
         method: 'isotonic' (más flexible) o 'sigmoid' (Platt scaling)
     
     Returns:
@@ -520,23 +665,31 @@ def calibrate_model(
         prob_before = model.predict_proba(X_test)
         # ¿Qué tan calibrado está? Promedio de probabilidades predichas
         avg_prob_before = prob_before[:, 1].mean()
+        # Brier score: mide directamente qué tan confiables son las
+        # probabilidades (no solo si acierta la clase). Menor es mejor.
+        brier_before = brier_score_loss(y_test, prob_before[:, 1])
     except:
         prob_before = None
         avg_prob_before = None
+        brier_before = None
     
     # Calibrar el modelo
     logger.info(f"   Ajustando calibración con método '{method}'...")
     
-    # sklearn >=1.6 removio cv='prefit'. Usamos StratifiedKFold(5) 
-    # que re-entrena en cada fold y produce probabilidades calibradas.
+    # sklearn >=1.6 removio cv='prefit'. Usamos StratifiedGroupKFold(5)
+    # que re-entrena en cada fold y produce probabilidades calibradas,
+    # sin separar las dos filas espejo de un mismo partido entre folds.
     calibrated_model = CalibratedClassifierCV(
         model,
         method=method,
-        cv=StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+        cv=StratifiedGroupKFold(n_splits=5, shuffle=True, random_state=42)
     )
-    
-    calibrated_model.fit(X_train, y_train)
-    
+
+    # CalibratedClassifierCV solo enruta `groups` al splitter (y no al
+    # estimador interno) con el sistema de metadata routing habilitado.
+    with sklearn.config_context(enable_metadata_routing=True):
+        calibrated_model.fit(X_train, y_train, groups=groups_train)
+
     # Medir accuracy después de calibrar
     y_pred_after = calibrated_model.predict(X_test)
     acc_after = accuracy_score(y_test, y_pred_after)
@@ -544,26 +697,31 @@ def calibrate_model(
     # Probabilidades después de calibrar
     prob_after = calibrated_model.predict_proba(X_test)
     avg_prob_after = prob_after[:, 1].mean()
-    
+    brier_after = brier_score_loss(y_test, prob_after[:, 1])
+
     logger.info(f"\n[STATS] COMPARACIÓN ANTES/DESPUÉS:")
     logger.info(f"   ┌────────────────────────────────────────┐")
     logger.info(f"   │                ANTES    DESPUÉS        │")
     logger.info(f"   │ Accuracy:     {acc_before*100:.2f}%    {acc_after*100:.2f}%           │")
     if avg_prob_before:
         logger.info(f"   │ Prob media:  {avg_prob_before*100:.2f}%    {avg_prob_after*100:.2f}%           │")
+    if brier_before is not None:
+        logger.info(f"   │ Brier score: {brier_before:.4f}    {brier_after:.4f}           │")
     logger.info(f"   └────────────────────────────────────────┘")
-    
+
     # Nota: La calibración puede cambiar ligeramente el accuracy
-    # pero hace que las probabilidades sean más confiables
-    
+    # pero hace que las probabilidades sean más confiables (menor Brier score)
+
     metrics = {
         'accuracy_before': acc_before,
         'accuracy_after': acc_after,
         'avg_prob_before': avg_prob_before,
         'avg_prob_after': avg_prob_after,
+        'brier_before': brier_before,
+        'brier_after': brier_after,
         'method': method
     }
-    
+
     return calibrated_model, metrics
 
 
@@ -597,19 +755,25 @@ def save_artifacts(
         'model': output_dir / 'modelo_xgboost_final.pkl',
         'scaler': output_dir / 'scaler_final.pkl',
         'elo': output_dir / 'elo_tracker.pkl',
+        'elo_surface': output_dir / 'elo_surface_tracker.pkl',
         'h2h': output_dir / 'h2h_tracker.pkl',
+        'h2h_weighted': output_dir / 'h2h_weighted_tracker.pkl',
         'surface': output_dir / 'stats_superficie_v2.pkl',
+        'surface_momentum': output_dir / 'surface_momentum_tracker.pkl',
         'clutch': output_dir / 'clutch_tracker.pkl',
     }
-    
+
     # Guardar modelo y scaler
     joblib.dump(model, artifacts['model'])
     joblib.dump(scaler, artifacts['scaler'])
-    
+
     # Guardar trackers
     joblib.dump(trackers['elo'], artifacts['elo'])
+    joblib.dump(trackers['elo_surface'], artifacts['elo_surface'])
     joblib.dump(trackers['h2h'], artifacts['h2h'])
+    joblib.dump(trackers['h2h_weighted'], artifacts['h2h_weighted'])
     joblib.dump(trackers['surface'], artifacts['surface'])
+    joblib.dump(trackers['surface_momentum'], artifacts['surface_momentum'])
     joblib.dump(trackers['clutch'], artifacts['clutch'])
     
     logger.info(f"Artefactos guardados en: {output_dir}")
@@ -638,40 +802,53 @@ def run_training_pipeline(csv_path: Optional[Path] = None, output_dir: Optional[
     df = load_training_data(csv_path)
     
     # Preparar features
-    X, y, processor = prepare_features(df)
-    
-    # Split
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42
+    X, y, groups, processor = prepare_features(df)
+
+    # Split temporal agrupado por partido (evita data leakage)
+    X_train, X_test, y_train, y_test, _, _ = temporal_train_test_split(
+        X, y, groups, test_size=0.2
     )
-    
+
     # Escalar
     scaler = StandardScaler()
     X_train_scaled = scaler.fit_transform(X_train)
     X_test_scaled = scaler.transform(X_test)
     
     # Entrenar
-    model, accuracy = train_model(X_train_scaled, y_train, X_test_scaled, y_test)
-    
+    model, metrics = train_model(X_train_scaled, y_train, X_test_scaled, y_test)
+
+    # Baselines: ¿cuánto aporta el modelo sobre una heurística simple?
+    baselines = evaluate_baselines(X_test, y_test)
+    logger.info("\n[STATS] BASELINES DE REFERENCIA (test set):")
+    for name, acc in baselines.items():
+        logger.info(f"  - {name}: {acc*100:.2f}%")
+    logger.info(
+        f"  - modelo XGBoost: {metrics['accuracy']*100:.2f}% "
+        f"({(metrics['accuracy'] - baselines['favorito_ranking'])*100:+.2f}pp vs favorito por ranking)"
+    )
+
     # Feature importance
     logger.info("\n[STATS] IMPORTANCIA DE VARIABLES:")
     importances = pd.DataFrame({
         'Variable': FEATURES,
         'Importancia': model.feature_importances_
     }).sort_values('Importancia', ascending=False)
-    
+
     for _, row in importances.iterrows():
         logger.info(f"  - {row['Variable']}: {row['Importancia']*100:.2f}%")
-    
+
     # Guardar
     artifacts = save_artifacts(model, scaler, processor, output_dir)
-    
+
     logger.info("="*60)
-    logger.info(f"[TOP] PRECISIÓN FINAL: {accuracy*100:.2f}%")
+    logger.info(f"[TOP] PRECISIÓN FINAL: {metrics['accuracy']*100:.2f}%")
     logger.info("="*60)
-    
+
     return {
-        'accuracy': accuracy,
+        'accuracy': metrics['accuracy'],
+        'roc_auc': metrics['roc_auc'],
+        'log_loss': metrics['log_loss'],
+        'baselines': baselines,
         'feature_importance': importances.to_dict('records'),
         'artifacts': {k: str(v) for k, v in artifacts.items()},
         'n_samples': len(X),
@@ -717,15 +894,15 @@ def run_training_pipeline_advanced(
     # ===========================================
     logger.info("\n[DATA] PASO 1: Cargando datos...")
     df = load_training_data(csv_path)
-    X, y, processor = prepare_features(df)
-    
-    # Split
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42, stratify=y
+    X, y, groups, processor = prepare_features(df)
+
+    # Split temporal agrupado por partido (evita data leakage)
+    X_train, X_test, y_train, y_test, groups_train, groups_test = temporal_train_test_split(
+        X, y, groups, test_size=0.2
     )
-    
-    logger.info(f"   - Train: {len(X_train)} muestras")
-    logger.info(f"   - Test: {len(X_test)} muestras")
+
+    logger.info(f"   - Train: {len(X_train)} muestras ({groups_train.nunique()} partidos)")
+    logger.info(f"   - Test: {len(X_test)} muestras ({groups_test.nunique()} partidos)")
     
     # Escalar
     scaler = StandardScaler()
@@ -747,15 +924,17 @@ def run_training_pipeline_advanced(
     
     # CV requiere datos sin escalar (creamos un pipeline simple)
     # Pero para XGBoost el escalado ayuda, así que usamos los escalados
-    cv_results = evaluate_with_cross_validation(base_model, X_train_scaled, y_train, cv_folds=cv_folds)
-    
+    cv_results = evaluate_with_cross_validation(
+        base_model, X_train_scaled, y_train, groups_train, cv_folds=cv_folds
+    )
+
     # ===========================================
     # PASO 3: Grid Search (opcional)
     # ===========================================
     if use_grid_search:
         logger.info("\n[SEARCH] PASO 3: Grid Search para hiperparámetros...")
         best_model, best_params, test_score = tune_hyperparameters(
-            X_train_scaled, y_train, X_test_scaled, y_test, cv_folds=3
+            X_train_scaled, y_train, X_test_scaled, y_test, groups_train, cv_folds=3
         )
         model = best_model
     else:
@@ -776,7 +955,7 @@ def run_training_pipeline_advanced(
     if use_calibration:
         logger.info("\n[CALIB] PASO 4: Calibrando probabilidades...")
         final_model, calib_metrics = calibrate_model(
-            model, X_train_scaled, y_train, X_test_scaled, y_test
+            model, X_train_scaled, y_train, X_test_scaled, y_test, groups_train
         )
         calibration_info = calib_metrics
     else:
@@ -793,8 +972,21 @@ def run_training_pipeline_advanced(
     
     # Predicciones finales
     y_pred = final_model.predict(X_test_scaled)
+    y_proba = final_model.predict_proba(X_test_scaled)[:, 1]
     final_accuracy = accuracy_score(y_test, y_pred)
-    
+    final_roc_auc = roc_auc_score(y_test, y_proba)
+    final_log_loss = log_loss(y_test, y_proba)
+
+    # Baselines: ¿cuánto aporta el modelo sobre una heurística simple?
+    baselines = evaluate_baselines(X_test, y_test)
+    logger.info("\n[STATS] BASELINES DE REFERENCIA (test set):")
+    for name, acc in baselines.items():
+        logger.info(f"   - {name}: {acc*100:.2f}%")
+    logger.info(
+        f"   - modelo final: {final_accuracy*100:.2f}% "
+        f"({(final_accuracy - baselines['favorito_ranking'])*100:+.2f}pp vs favorito por ranking)"
+    )
+
     # Feature importance
     logger.info("\n[STATS] IMPORTANCIA DE VARIABLES:")
     importances_df = pd.DataFrame({
@@ -812,6 +1004,9 @@ def run_training_pipeline_advanced(
     logger.info(f"│ CV Accuracy (modelo base):     {cv_results['mean_accuracy']*100:.2f}% ± {cv_results['std_accuracy']*100:.2f}%")
     logger.info(f"│ CV Accuracy (mejor modelo):    {test_score*100:.2f}%" if use_grid_search else f"│ CV Accuracy (sin GS):           {cv_results['mean_accuracy']*100:.2f}%")
     logger.info(f"│ Test Accuracy (final):          {final_accuracy*100:.2f}%")
+    logger.info(f"│ Test ROC-AUC (final):           {final_roc_auc:.4f}")
+    logger.info(f"│ Test Log-loss (final):          {final_log_loss:.4f}")
+    logger.info(f"│ Baseline favorito ranking:      {baselines['favorito_ranking']*100:.2f}%")
     logger.info(f"│ Intervalo de confianza 95%:    [{cv_results['ci_lower']*100:.2f}%, {cv_results['ci_upper']*100:.2f}%]")
     logger.info("="*70)
     
@@ -824,6 +1019,9 @@ def run_training_pipeline_advanced(
     
     return {
         'accuracy': final_accuracy,
+        'roc_auc': final_roc_auc,
+        'log_loss': final_log_loss,
+        'baselines': baselines,
         'cv_accuracy': cv_results['mean_accuracy'],
         'cv_std': cv_results['std_accuracy'],
         'cv_ci_lower': cv_results['ci_lower'],
